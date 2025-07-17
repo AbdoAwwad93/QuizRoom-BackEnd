@@ -1,10 +1,11 @@
 from django.db import models
 from quizroom.models.users.models import CustomUser
+from rest_framework.fields import MaxValueValidator, MinValueValidator
 
 class Course(models.Model):
     name = models.CharField(max_length=255)
     code = models.CharField(max_length=20, unique=True)
-    level = models.CharField(max_length=50)
+    level = models.IntegerField(validators=[MaxValueValidator(4), MinValueValidator(1)])
 
     def __str__(self):
         return f"{self.code} - {self.name}"

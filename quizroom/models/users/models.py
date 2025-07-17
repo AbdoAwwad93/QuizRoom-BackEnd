@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
-
+from rest_framework.fields import MaxValueValidator, MinValueValidator
 class CustomUserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
         if not email:
@@ -43,7 +43,7 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
 class StudentProfile(models.Model):
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name='studentprofile')
-    level = models.CharField(max_length=50)
+    level = models.IntegerField(validators=[MaxValueValidator(4), MinValueValidator(1)])
 
     def __str__(self):
         return f"StudentProfile: {self.user.email}" # type: ignore
