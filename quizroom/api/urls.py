@@ -19,4 +19,6 @@ urlpatterns = [
     path('instructor/students/<int:student_id>/remove/', RemoveStudentFromCourseView.as_view(), name='remove_student_from_course'),
     path('instructor/students/<int:student_id>/update/', UpdateStudentProfileView.as_view(), name='update_student_profile'),
     path('instructor/quizzes/', InstructorCourseQuizzesView.as_view(), name='instructor_course_quizzes'),
+    path('instructor/quizzes/<int:quiz_id>/remove/', InstructorCourseQuizzesView.as_view(), name='remove_quiz'),
+    path('instructor/quizzes/<int:quiz_id>/edit/', InstructorCourseQuizzesView.as_view(), name='edit_quiz'),
 ]

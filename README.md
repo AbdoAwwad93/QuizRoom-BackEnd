@@ -91,37 +91,140 @@ python manage.py runserver
     "level": 2
   }
   ```
-- Response: `{ "student": { ... } }`
+- Response:
+  ```json
+  { "student": { "id": 12, "email": "student@example.com", "name": "Student Name" } }
+  ```
 
 #### 2. Assign Student to Instructor's Course
 - **POST** `/api/instructor/students/<student_id>/assign-courses/`
-- Body: `{}`
-- Response: Success or already assigned message
+- Body:
+  ```json
+  {}
+  ```
+- Response:
+  ```json
+  { "detail": "Student assigned to your course successfully." }
+  ```
+  or
+  ```json
+  { "detail": "Student is already assigned to your course." }
+  ```
 
 #### 3. List Instructor's Courses
 - **GET** `/api/instructor/courses/`
-- Response: List of courses assigned to the instructor
+- Response:
+  ```json
+  [
+    { "id": 1, "name": "Math 101", "code": "MATH101", "level": 2 }
+  ]
+  ```
 
 #### 4. List Students in a Course
 - **GET** `/api/instructor/courses/<course_id>/students/`
-- Response: List of students assigned to the given course (if the instructor manages it)
+- Response:
+  ```json
+  [
+    { "id": 12, "email": "student@example.com", "name": "Student Name" }
+  ]
+  ```
 
 #### 5. List All Students Managed by Instructor
 - **GET** `/api/instructor/students/`
-- Response: List of all students assigned to the instructor's course (for now, one course)
+- Response:
+  ```json
+  [
+    { "id": 12, "email": "student@example.com", "name": "Student Name" }
+  ]
+  ```
 
 #### 6. Remove Student from Instructor's Course
 - **DELETE** `/api/instructor/students/<student_id>/remove/`
-- Response: Success message if removed, or not found if the student was not assigned
+- Response:
+  ```json
+  { "detail": "Student removed from your course." }
+  ```
+  or
+  ```json
+  { "detail": "Student was not assigned to your course." }
+  ```
 
 #### 7. Update Student Profile
 - **PATCH** `/api/instructor/students/<student_id>/update/`
-- Body: `{ "name": "New Name", "email": "newemail@example.com" }` (either or both fields)
-- Response: Updated student object or error message
+- Body:
+  ```json
+  { "name": "New Name", "email": "newemail@example.com" }
+  ```
+- Response:
+  ```json
+  { "student": { "id": 12, "email": "newemail@example.com", "name": "New Name" } }
+  ```
 
 #### 8. List All Quizzes for Instructor's Courses
 - **GET** `/api/instructor/quizzes/`
-- Response: List of quizzes for all courses managed by the instructor
+- Response:
+  ```json
+  [
+    {
+      "id": 5,
+      "title": "Quiz2",
+      "course_id": 1,
+      "course_name": "Math 101",
+      "created_at": "2025-07-18T04:30:16.318838+03:00"
+    }
+  ]
+  ```
+
+#### 9. Edit a Quiz
+- **PATCH** `/api/instructor/quizzes/<quiz_id>/edit/`
+- Body (any subset of fields):
+  ```json
+  {
+    "title": "Updated Quiz Title",
+    "week_number": 2,
+    "start_date": "2025-07-20T09:00:00+03:00",
+    "end_date": "2025-07-20T10:00:00+03:00",
+    "duration": 60,
+    "total_points": 100
+  }
+  ```
+- Response:
+  ```json
+  {
+    "id": 5,
+    "title": "Updated Quiz Title",
+    "course_id": 1,
+    "course_name": "Math 101",
+    "created_at": "2025-07-18T04:30:16.318838+03:00"
+  }
+  ```
+  or
+  ```json
+  { "detail": "Quiz not found." }
+  ```
+  or
+  ```json
+  { "detail": "You do not have permission to edit this quiz." }
+  ```
+  or
+  ```json
+  { "detail": "No valid fields to update." }
+  ```
+
+#### 10. Remove a Quiz
+- **DELETE** `/api/instructor/quizzes/<quiz_id>/remove/`
+- Response:
+  ```json
+  { "detail": "Quiz deleted successfully." }
+  ```
+  or
+  ```json
+  { "detail": "Quiz not found." }
+  ```
+  or
+  ```json
+  { "detail": "You do not have permission to delete this quiz." }
+  ```
 
 ---
 

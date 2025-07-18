@@ -9,6 +9,7 @@ class Quiz(models.Model):
     end_date = models.DateTimeField()
     duration = models.IntegerField(help_text='Duration in minutes')
     total_points = models.IntegerField()
+    created_at = models.DateTimeField(null=True, blank=True,auto_now_add= True)
 
     def __str__(self):
         return self.title

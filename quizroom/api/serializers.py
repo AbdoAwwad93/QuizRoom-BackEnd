@@ -59,6 +59,20 @@ class StudentListSerializer(serializers.ModelSerializer):
         fields = ('id', 'email', 'name')
 
 class QuizSerializer(serializers.ModelSerializer):
+    course_id = serializers.IntegerField(source='course.id', read_only=True)
+    course_name = serializers.SerializerMethodField()
+
     class Meta:
         model = Quiz
-        fields = ('id', 'title', 'description', 'course', 'created_at')
+        fields = ('id', 'title', 'course_id', 'course_name', 'created_at')
+
+    def get_course_name(self, obj):
+        return obj.course.name if obj.course else None
+
+class QuizCreateSerializer(serializers.Serializer):
+    title = serializers.CharField(max_length=255)
+    week_number = serializers.IntegerField(min_value=1)
+    start_date = serializers.DateTimeField()
+    end_date = serializers.DateTimeField()
+    duration = serializers.IntegerField(min_value=1, help_text='Duration in minutes')
+    total_points = serializers.IntegerField(min_value=1)
