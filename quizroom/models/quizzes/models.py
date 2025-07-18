@@ -24,7 +24,7 @@ class Question(models.Model):
     quiz = models.ForeignKey(Quiz, on_delete=models.CASCADE)
     question_text = models.TextField()
     question_type = models.CharField(max_length=50, choices=QUESTION_TYPE_CHOICES)
-    correct_answer = models.TextField()
+    correct_answer = models.TextField(null=True, blank=True)
     points = models.IntegerField()
 
     def __str__(self):

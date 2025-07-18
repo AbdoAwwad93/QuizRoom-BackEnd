@@ -181,7 +181,92 @@ python manage.py runserver
   ]
   ```
 
-#### 9. Edit a Quiz
+#### 9. Create a Quiz
+- **POST** `/api/instructor/quizzes/`
+- Body:
+  ```json
+  {
+    "title": "Quiz2",
+    "week_number": 1,
+    "start_date": "2025-07-20T09:00:00+03:00",
+    "end_date": "2025-07-20T10:00:00+03:00",
+    "duration": 60,
+    "total_points": 100
+  }
+  ```
+- Response:
+  ```json
+  {
+    "id": 5,
+    "title": "Quiz2",
+    "course_id": 1,
+    "course_name": "Math 101",
+    "week_number": 1,
+    "start_date": "2025-07-20T09:00:00+03:00",
+    "end_date": "2025-07-20T10:00:00+03:00",
+    "duration": 60,
+    "total_points": 100,
+    "created_at": "2025-07-18T04:30:16.318838+03:00",
+    "updated_at": "2025-07-18T05:29:03.000000+03:00"
+  }
+  ```
+  or
+  ```json
+  { "detail": "Instructor is not assigned to any course." }
+  ```
+#### 10. List All Questions in a Quiz
+- **GET** `/api/instructor/quizzes/<quiz_id>/questions/`
+- Response:
+  ```json
+  [
+    {
+      "id": 1,
+      "quiz": 5,
+      "question_text": "What is 2 + 2?",
+      "question_type": "short_answer",
+      "correct_answer": null,
+      "points": 5
+    }
+  ]
+  ```
+  or
+  ```json
+  { "detail": "Quiz not found." }
+  ```
+  or
+  ```json
+  { "detail": "You do not have permission to view questions for this quiz." }
+  ```
+#### 11. Create Question for a Quiz
+- **POST** `/api/instructor/quizzes/<quiz_id>/questions/create/`
+- Body:
+  ```json
+  {
+    "question_text": "What is 2 + 2?",
+    "points": 5
+  }
+  ```
+- Response:
+  ```json
+  {
+    "id": 1,
+    "quiz": 5,
+    "question_text": "What is 2 + 2?",
+    "question_type": "short_answer",
+    "correct_answer": null,
+    "points": 5
+  }
+  ```
+  or
+  ```json
+  { "detail": "Quiz not found." }
+  ```
+  or
+  ```json
+  { "detail": "You do not have permission to add questions to this quiz." }
+  ```
+
+#### 12. Edit a Quiz
 - **PATCH** `/api/instructor/quizzes/<quiz_id>/edit/`
 - Body (any subset of fields):
   ```json
@@ -223,7 +308,55 @@ python manage.py runserver
   { "detail": "No valid fields to update." }
   ```
 
-#### 10. Remove a Quiz
+#### 14. Edit a Quiz Question
+- **PATCH** `/api/instructor/questions/<question_id>/edit/`
+- Body:
+  ```json
+  {
+    "question_text": "What is the capital of France?",
+    "points": 10
+  }
+  ```
+- Response:
+  ```json
+  {
+    "id": 2,
+    "quiz": 5,
+    "question_text": "What is the capital of France?",
+    "question_type": "short_answer",
+    "correct_answer": null,
+    "points": 10
+  }
+  ```
+  or
+  ```json
+  { "detail": "Question not found." }
+  ```
+  or
+  ```json
+  { "detail": "You do not have permission to edit this question." }
+  ```
+  or
+  ```json
+  { "detail": "No valid fields to update." }
+  ```
+
+#### 15. Remove a Quiz Question
+- **DELETE** `/api/instructor/questions/<question_id>/remove/`
+- Response:
+  ```json
+  { "detail": "Question deleted successfully." }
+  ```
+  or
+  ```json
+  { "detail": "Question not found." }
+  ```
+  or
+  ```json
+  { "detail": "You do not have permission to remove this question." }
+  ```
+
+#### 16. Remove a Quiz
 - **DELETE** `/api/instructor/quizzes/<quiz_id>/remove/`
 - Response:
   ```json

@@ -1,10 +1,11 @@
 # API URLs for QuizRoom
 from django.urls import path
 from .views import LoginView
-from .views_instructor import CreateStudentView, AssignCoursesToStudentView
-from .views_instructor_courses import InstructorCoursesView, CourseStudentsView
-from .views_instructor_students import InstructorAllStudentsView, RemoveStudentFromCourseView, UpdateStudentProfileView
-from .views_instructor_quizzes import InstructorCourseQuizzesView
+from .views_instructor import *
+from .views_instructor_courses import *
+from .views_instructor_students import *
+from .views_instructor_quizzes import *
+from .views_instructor_questions import *
 from rest_framework_simplejwt.views import TokenRefreshView, TokenVerifyView
 
 urlpatterns = [
@@ -21,4 +22,8 @@ urlpatterns = [
     path('instructor/quizzes/', InstructorCourseQuizzesView.as_view(), name='instructor_course_quizzes'),
     path('instructor/quizzes/<int:quiz_id>/remove/', InstructorCourseQuizzesView.as_view(), name='remove_quiz'),
     path('instructor/quizzes/<int:quiz_id>/edit/', InstructorCourseQuizzesView.as_view(), name='edit_quiz'),
+    path('instructor/quizzes/<int:quiz_id>/questions/create/', InstructorQuizQuestionCreateView.as_view(), name='instructor_quiz_create_question'),
+    path('instructor/quizzes/<int:quiz_id>/questions/', InstructorQuizQuestionListView.as_view(), name='instructor_quiz_list_questions'),
+    path('instructor/questions/<int:question_id>/edit/', InstructorQuizQuestionEditRemoveView.as_view(), name='instructor_edit_question'),
+    path('instructor/questions/<int:question_id>/remove/', InstructorQuizQuestionEditRemoveView.as_view(), name='instructor_remove_question'),
 ]

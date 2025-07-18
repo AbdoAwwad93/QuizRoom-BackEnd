@@ -3,7 +3,7 @@
 from rest_framework import serializers
 from quizroom.models.users.models import CustomUser, StudentProfile
 from quizroom.models.courses.models import Course, StudentCourse
-from quizroom.models.quizzes.models import Quiz
+from quizroom.models.quizzes.models import Quiz, Question
 
 class LoginSerializer(serializers.Serializer):
     email = serializers.EmailField()
@@ -71,6 +71,16 @@ class QuizSerializer(serializers.ModelSerializer):
 
     def get_course_name(self, obj):
         return obj.course.name if obj.course else None
+
+class QuestionCreateSerializer(serializers.Serializer):
+    question_text = serializers.CharField(max_length=2048)
+    # correct_answer = serializers.CharField(max_length=2048)
+    points = serializers.IntegerField(min_value=1)
+
+class QuestionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Question
+        fields = ('id', 'quiz', 'question_text', 'question_type', 'correct_answer', 'points')
 
 class QuizCreateSerializer(serializers.Serializer):
     title = serializers.CharField(max_length=255)
