@@ -106,6 +106,23 @@ python manage.py runserver
 - **GET** `/api/instructor/courses/<course_id>/students/`
 - Response: List of students assigned to the given course (if the instructor manages it)
 
+#### 5. List All Students Managed by Instructor
+- **GET** `/api/instructor/students/`
+- Response: List of all students assigned to the instructor's course (for now, one course)
+
+#### 6. Remove Student from Instructor's Course
+- **DELETE** `/api/instructor/students/<student_id>/remove/`
+- Response: Success message if removed, or not found if the student was not assigned
+
+#### 7. Update Student Profile
+- **PATCH** `/api/instructor/students/<student_id>/update/`
+- Body: `{ "name": "New Name", "email": "newemail@example.com" }` (either or both fields)
+- Response: Updated student object or error message
+
+#### 8. List All Quizzes for Instructor's Courses
+- **GET** `/api/instructor/quizzes/`
+- Response: List of quizzes for all courses managed by the instructor
+
 ---
 
 ## 🔒 Permissions & Roles
