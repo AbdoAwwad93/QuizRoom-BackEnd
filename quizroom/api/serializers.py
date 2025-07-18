@@ -64,7 +64,10 @@ class QuizSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Quiz
-        fields = ('id', 'title', 'course_id', 'course_name', 'created_at')
+        fields = (
+            'id', 'title', 'course_id', 'course_name', 'week_number', 'start_date', 'end_date',
+            'duration', 'total_points', 'created_at', 'updated_at'
+        )
 
     def get_course_name(self, obj):
         return obj.course.name if obj.course else None

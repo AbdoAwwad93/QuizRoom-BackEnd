@@ -63,6 +63,7 @@ class InstructorCourseQuizzesView(APIView):
                 setattr(quiz, field, data[field])
                 updated = True
         if updated:
+            quiz.updated_at = timezone.now()
             quiz.save()
             return Response(QuizSerializer(quiz).data, status=status.HTTP_200_OK)
         else:

@@ -10,6 +10,7 @@ class Quiz(models.Model):
     duration = models.IntegerField(help_text='Duration in minutes')
     total_points = models.IntegerField()
     created_at = models.DateTimeField(null=True, blank=True,auto_now_add= True)
+    updated_at = models.DateTimeField(null=True, blank=True,auto_now= False)
 
     def __str__(self):
         return self.title
