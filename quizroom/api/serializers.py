@@ -3,6 +3,7 @@
 from rest_framework import serializers
 from quizroom.models.users.models import CustomUser, StudentProfile
 from quizroom.models.courses.models import Course, StudentCourse
+from quizroom.models.quizzes.models import Quiz
 
 class LoginSerializer(serializers.Serializer):
     email = serializers.EmailField()
@@ -56,3 +57,8 @@ class StudentListSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
         fields = ('id', 'email', 'name')
+
+class QuizSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Quiz
+        fields = ('id', 'title', 'description', 'course', 'created_at')
