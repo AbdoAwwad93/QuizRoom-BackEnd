@@ -27,25 +27,38 @@ pip install -r requirements.txt
 ```
 
 ### 4. Configure Environment Variables
-Create a `.env` file in the `quizroom_backend` directory with your database credentials:
+Create a `.env` file in the project root directory with your database credentials:
 ```
-DB_NAME=your_db_name
-DB_USER=your_db_user
-DB_PASSWORD=your_db_password
+DB_NAME=quizroom_db
+DB_USER=quizroom_user
+DB_PASSWORD=your_password
 DB_HOST=localhost
 DB_PORT=5432
 ```
 
-### 5. Apply Migrations
-```sh
+### 5. Install Dependencies
+```bash
+pip install -r requirements.txt
+```
+
+### 6. Apply Migrations
+```bash
 python manage.py migrate
 ```
 
-### 6. Run the Server
-```sh
+### 7. Generate Sample Data
+To populate the database with sample data, run:
+```bash
+python manage.py generate_sample_data
+```
+This will create:
+- Sample instructors,courses 
+- **IMPORTANT:** The default password for all instructors is **`password123`**
+
+### 8. Run the Server
+```bash
 python manage.py runserver
 ```
-
 ---
 
 ## 🛡️ Authentication
