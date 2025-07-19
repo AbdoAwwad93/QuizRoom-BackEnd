@@ -63,141 +63,134 @@ python manage.py runserver
 
 ## 📚 API Endpoints
 
-### **Authentication**
+### Authentication
 - **POST** `/api/auth/login/`
   - Body: `{ "email": "user@example.com", "password": "yourpassword" }`
   - Response: `{ "user": {...}, "refresh": "...", "access": "..." }`
-
 - **POST** `/api/auth/refresh/`
   - Body: `{ "refresh": "<refresh_token>" }`
   - Response: `{ "access": "..." }`
-
 - **POST** `/api/auth/verify/`
   - Body: `{ "token": "<any_token>" }`
   - Response: Validity info
 
 ---
 
-### **Instructor APIs** *(require instructor login)*
+### Student Management (Instructor Only)
+1. **Create Student**
+   - **POST** `/api/instructor/create-student/`
+   - Body:
+     ```json
+     {
+       "email": "student@example.com",
+       "name": "Student Name",
+       "password": "studentpassword",
+       "level": 2
+     }
+     ```
+   - Response:
+     ```json
+     { "student": { "id": 12, "email": "student@example.com", "name": "Student Name" } }
+     ```
+2. **List All Students Managed by Instructor**
+   - **GET** `/api/instructor/students/`
+   - Response:
+     ```json
+     [
+       { "id": 12, "email": "student@example.com", "name": "Student Name" }
+     ]
+     ```
+3. **Assign Student to Instructor's Course**
+   - **POST** `/api/instructor/students/<student_id>/assign-courses/`
+   - Body:
+     ```json
+     {}
+     ```
+   - Response:
+     ```json
+     { "detail": "Student assigned to your course successfully." }
+     ```
+     or
+     ```json
+     { "detail": "Student is already assigned to your course." }
+     ```
+4. **Update Student Profile**
+   - **PATCH** `/api/instructor/students/<student_id>/update/`
+   - Body:
+     ```json
+     { "name": "New Name", "email": "newemail@example.com" }
+     ```
+   - Response:
+     ```json
+     { "student": { "id": 12, "email": "newemail@example.com", "name": "New Name" } }
+     ```
+5. **Remove Student from Instructor's Course**
+   - **DELETE** `/api/instructor/students/<student_id>/remove/`
+   - Response:
+     ```json
+     { "detail": "Student removed from your course." }
+     ```
+     or
+     ```json
+     { "detail": "Student was not assigned to your course." }
+     ```
 
-#### 1. Create Student
-- **POST** `/api/instructor/create-student/`
-- Body:
-  ```json
-  {
-    "email": "student@example.com",
-    "name": "Student Name",
-    "password": "studentpassword",
-    "level": 2
-  }
-  ```
-- Response:
-  ```json
-  { "student": { "id": 12, "email": "student@example.com", "name": "Student Name" } }
-  ```
+### Course Management (Instructor Only)
+6. **List Instructor's Courses**
+   - **GET** `/api/instructor/courses/`
+   - Response:
+     ```json
+     [
+       { "id": 1, "name": "Math 101", "code": "MATH101", "level": 2 }
+     ]
+     ```
+7. **List Students in a Course**
+   - **GET** `/api/instructor/courses/<course_id>/students/`
+   - Response:
+     ```json
+     [
+       { "id": 12, "email": "student@example.com", "name": "Student Name" }
+     ]
+     ```
 
-#### 2. Assign Student to Instructor's Course
-- **POST** `/api/instructor/students/<student_id>/assign-courses/`
-- Body:
-  ```json
-  {}
-  ```
-- Response:
-  ```json
-  { "detail": "Student assigned to your course successfully." }
-  ```
-  or
-  ```json
-  { "detail": "Student is already assigned to your course." }
-  ```
-
-#### 3. List Instructor's Courses
-- **GET** `/api/instructor/courses/`
-- Response:
-  ```json
-  [
-    { "id": 1, "name": "Math 101", "code": "MATH101", "level": 2 }
-  ]
-  ```
-
-#### 4. List Students in a Course
-- **GET** `/api/instructor/courses/<course_id>/students/`
-- Response:
-  ```json
-  [
-    { "id": 12, "email": "student@example.com", "name": "Student Name" }
-  ]
-  ```
-
-#### 5. List All Students Managed by Instructor
-- **GET** `/api/instructor/students/`
-- Response:
-  ```json
-  [
-    { "id": 12, "email": "student@example.com", "name": "Student Name" }
-  ]
-  ```
-
-#### 6. Remove Student from Instructor's Course
-- **DELETE** `/api/instructor/students/<student_id>/remove/`
-- Response:
-  ```json
-  { "detail": "Student removed from your course." }
-  ```
-  or
-  ```json
-  { "detail": "Student was not assigned to your course." }
-  ```
-
-#### 7. Update Student Profile
-- **PATCH** `/api/instructor/students/<student_id>/update/`
-- Body:
-  ```json
-  { "name": "New Name", "email": "newemail@example.com" }
-  ```
-- Response:
-  ```json
-  { "student": { "id": 12, "email": "newemail@example.com", "name": "New Name" } }
-  ```
-
-#### 8. List All Quizzes for Instructor's Courses
-- **GET** `/api/instructor/quizzes/`
-- Response:
-  ```json
-  [
-    {
-      "id": 5,
-      "title": "Quiz2",
-      "course_id": 1,
-      "course_name": "Math 101",
-      "week_number": 1,
-      "start_date": "2025-07-20T09:00:00+03:00",
-      "end_date": "2025-07-20T10:00:00+03:00",
-      "duration": 60,
-      "total_points": 100,
-      "created_at": "2025-07-18T04:30:16.318838+03:00",
-      "updated_at": "2025-07-18T05:29:03.000000+03:00"
-    }
-  ]
-  ```
-
-#### 9. Create a Quiz
-- **POST** `/api/instructor/quizzes/`
-- Body:
-  ```json
-  {
-    "title": "Quiz2",
-    "week_number": 1,
-    "start_date": "2025-07-20T09:00:00+03:00",
-    "end_date": "2025-07-20T10:00:00+03:00",
-    "duration": 60,
-    "total_points": 100
-  }
-  ```
-- Response:
-  ```json
-  {
-    "id": 5,
+### Quiz Management (Instructor Only)
+8. **List All Quizzes for Instructor's Courses**
+   - **GET** `/api/instructor/quizzes/`
+   - Response:
+     ```json
+     [
+       {
+         "id": 5,
+         "title": "Quiz2",
+         "course_id": 1,
+         "course_name": "Math 101",
+         "week_number": 1,
+         "start_date": "2025-07-20T09:00:00+03:00",
+         "end_date": "2025-07-20T10:00:00+03:00",
+         "duration": 60,
+         "total_points": 100,
+         "created_at": "2025-07-18T04:30:16.318838+03:00",
+         "updated_at": "2025-07-18T05:29:03.000000+03:00"
+       }
+     ]
+     ```
+9. **Create a Quiz**
+   - **POST** `/api/instructor/quizzes/`
+   - Body:
+     ```json
+     {
+       "title": "Quiz2",
+       "week_number": 1,
+       "start_date": "2025-07-20T09:00:00+03:00",
+       "end_date": "2025-07-20T10:00:00+03:00",
+       "duration": 60,
+       "total_points": 100
+     }
+     ```
+   - Response:
+     ```json
+     {
+       "id": 5,
     "title": "Quiz2",
     "course_id": 1,
     "course_name": "Math 101",
