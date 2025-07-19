@@ -36,17 +36,12 @@ DB_HOST=localhost
 DB_PORT=5432
 ```
 
-### 5. Install Dependencies
-```bash
-pip install -r requirements.txt
-```
-
-### 6. Apply Migrations
+### 5. Apply Migrations
 ```bash
 python manage.py migrate
 ```
 
-### 7. Generate Sample Data
+### 6. Generate Sample Data
 To populate the database with sample data, run:
 ```bash
 python manage.py generate_sample_data
@@ -55,7 +50,7 @@ This will create:
 - Sample instructors,courses 
 - **IMPORTANT:** The default password for all instructors is **`password123`**
 
-### 8. Run the Server
+### 7. Run the Server
 ```bash
 python manage.py runserver
 ```
