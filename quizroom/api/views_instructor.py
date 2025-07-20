@@ -1,6 +1,6 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework import status
+from rest_framework import status , permissions
 from rest_framework.permissions import IsAuthenticated
 from django.contrib.auth import get_user_model
 from quizroom.models.users.models import StudentProfile
@@ -9,6 +9,16 @@ from .serializers import StudentCreateSerializer, AssignCoursesSerializer, UserS
 from .permissions import IsInstructor
 
 User = get_user_model()
+class InstructorProfileEditView(APIView):
+    permission_classes = [permissions.IsAuthenticated, IsInstructor]
+
+    def patch(self, request):
+        instructor = request.user
+        serializer = InstructorProfileEditSerializer(instructor, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({'detail': 'Name updated successfully.', 'name': serializer.data['name']})
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class CreateStudentView(APIView):
     permission_classes = [IsAuthenticated, IsInstructor]

@@ -4,6 +4,7 @@ from rest_framework import serializers
 from quizroom.models.users.models import CustomUser, StudentProfile
 from quizroom.models.courses.models import Course, StudentCourse
 from quizroom.models.quizzes.models import Quiz, Question
+from quizroom.models.submissions.models import StudentQuizSubmission, StudentAnswer
 
 class LoginSerializer(serializers.Serializer):
     email = serializers.EmailField()
@@ -89,3 +90,37 @@ class QuizCreateSerializer(serializers.Serializer):
     end_date = serializers.DateTimeField()
     duration = serializers.IntegerField(min_value=1, help_text='Duration in minutes')
     total_points = serializers.IntegerField(min_value=1)
+
+class StudentAnswerSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = StudentAnswer
+        fields = ['id', 'question', 'answer_text', 'points', 'feedback']
+        read_only_fields = ['id', 'question', 'answer_text']
+
+class InstructorGradeAnswerSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = StudentAnswer
+        fields = ['points', 'feedback']
+
+    def validate_points(self, value):
+        question = self.instance.question
+        if value < 0 or value > question.points:
+            raise serializers.ValidationError(f'Points must be between 0 and {question.points}.')
+        return value
+
+class StudentQuizSubmissionSerializer(serializers.ModelSerializer):
+    answers = StudentAnswerSerializer(source='studentanswer_set', many=True, read_only=True)
+    class Meta:
+        model = StudentQuizSubmission
+        fields = ['id', 'student', 'quiz', 'submission_date', 'grade', 'feedback', 'graded_at', 'status', 'answers']
+        read_only_fields = ['id', 'student', 'quiz', 'submission_date', 'grade', 'graded_at', 'status', 'answers']
+
+class InstructorSubmissionFeedbackSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = StudentQuizSubmission
+        fields = ['feedback']
+
+class InstructorProfileEditSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomUser
+        fields = ['name']

@@ -372,6 +372,89 @@ python manage.py runserver
   { "detail": "You do not have permission to delete this quiz." }
   ```
 
+
+### Quiz Grading (Instructor Only)
+17. **List Submissions for a Quiz**
+   - **GET** `/api/instructor/quizzes/<quiz_id>/submissions/`
+   - Response:
+     ```json
+     [
+       {
+         "id": 1,
+         "student": 12,
+         "quiz": 5,
+         "submission_date": "2025-07-20T12:00:00+03:00",
+         "grade": 95,
+         "feedback": "Great work!",
+         "graded_at": "2025-07-20T15:00:00+03:00",
+         "status": "graded",
+         "answers": [ ... ]
+       }
+     ]
+     ```
+18. **Retrieve a Submission with Answers**
+   - **GET** `/api/instructor/submissions/<submission_id>/`
+   - Response:
+     ```json
+     {
+       "id": 1,
+       "student": 12,
+       "quiz": 5,
+       "submission_date": "2025-07-20T12:00:00+03:00",
+       "grade": 95,
+       "feedback": "Great work!",
+       "graded_at": "2025-07-20T15:00:00+03:00",
+       "status": "graded",
+       "answers": [
+         {
+           "id": 101,
+           "question": 10,
+           "answer_text": "4",
+           "points": 5,
+           "feedback": "Correct!"
+         }
+       ]
+     }
+     ```
+19. **Grade a Single Answer**
+   - **PATCH** `/api/instructor/answers/<answer_id>/grade/`
+   - Body:
+     ```json
+     { "points": 4, "feedback": "Almost correct." }
+     ```
+   - Response:
+     ```json
+     { "detail": "Answer graded successfully." }
+     ```
+20. **Set Overall Submission Feedback**
+   - **PATCH** `/api/instructor/submissions/<submission_id>/feedback/`
+   - Body:
+     ```json
+     { "feedback": "Excellent effort overall!" }
+     ```
+   - Response:
+     ```json
+     { "detail": "Submission feedback set." }
+     ```
+21. **Release All Grades/Feedback for a Quiz**
+   - **POST** `/api/instructor/quizzes/<quiz_id>/release/`
+   - Response:
+     ```json
+     { "detail": "3 submissions released to students." }
+     ```
+
+### Profile Management (Instructor Only)
+22. **Edit Instructor Profile**
+   - **PATCH** `/api/instructor/profile/edit/`
+   - Body:
+     ```json
+     { "name": "New Instructor Name" }
+     ```
+   - Response:
+     ```json
+     { "detail": "Name updated successfully.", "name": "New Instructor Name" }
+     ```
+
 ---
 
 ## 🔒 Permissions & Roles

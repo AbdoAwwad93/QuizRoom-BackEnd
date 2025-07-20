@@ -6,6 +6,7 @@ from .views_instructor_courses import *
 from .views_instructor_students import *
 from .views_instructor_quizzes import *
 from .views_instructor_questions import *
+from .views_instructor_grading import *
 from rest_framework_simplejwt.views import TokenRefreshView, TokenVerifyView
 
 urlpatterns = [
@@ -24,6 +25,12 @@ urlpatterns = [
     path('instructor/quizzes/<int:quiz_id>/edit/', InstructorCourseQuizzesView.as_view(), name='edit_quiz'),
     path('instructor/quizzes/<int:quiz_id>/questions/create/', InstructorQuizQuestionCreateView.as_view(), name='instructor_quiz_create_question'),
     path('instructor/quizzes/<int:quiz_id>/questions/', InstructorQuizQuestionListView.as_view(), name='instructor_quiz_list_questions'),
-    path('instructor/questions/<int:question_id>/edit/', InstructorQuizQuestionEditRemoveView.as_view(), name='instructor_edit_question'),
+    path('instructor/quizzes/<int:quiz_id>/submissions/', InstructorQuizSubmissionsListView.as_view(), name='instructor_quiz_submissions'),
+    path('instructor/quizzes/<int:quiz_id>/release/', InstructorReleaseQuizGradesView.as_view(), name='instructor_release_quiz_grades'),
     path('instructor/questions/<int:question_id>/remove/', InstructorQuizQuestionEditRemoveView.as_view(), name='instructor_remove_question'),
+    path('instructor/questions/<int:question_id>/edit/', InstructorQuizQuestionEditRemoveView.as_view(), name='instructor_edit_question'),
+    path('instructor/submissions/<int:submission_id>/', InstructorSubmissionDetailView.as_view(), name='instructor_submission_detail'),
+    path('instructor/submissions/<int:submission_id>/feedback/', InstructorSubmissionFeedbackView.as_view(), name='instructor_submission_feedback'),
+    path('instructor/answers/<int:answer_id>/grade/', InstructorGradeAnswerView.as_view(), name='instructor_grade_answer'),
+    path('instructor/profile/edit/', InstructorProfileEditView.as_view(), name='instructor_profile_edit'),
 ]
