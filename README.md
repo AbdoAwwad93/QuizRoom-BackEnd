@@ -1,6 +1,6 @@
 # QuizRoom BackEnd
 
-A production-grade backend for a student quiz management system, supporting both desktop and web clients, with full RESTful APIs for authentication, student/instructor management, course assignments, and more.
+Backend for a student quiz management system, supporting both desktop and web clients, with full RESTful APIs for authentication, student/instructor management, course assignments, and more.
 
 ---
 
@@ -47,8 +47,17 @@ To populate the database with sample data, run:
 python manage.py generate_sample_data
 ```
 This will create:
-- Sample instructors,courses 
+- Sample instructors, courses
 - **IMPORTANT:** The default password for all instructors is **`password123`**
+
+### 6b. Generate Student Sample Data
+To create sample students for development/testing, run:
+```bash
+python manage.py generate_student_data
+```
+This will create:
+- 10 sample student users (role: student) with levels 1–4
+- **IMPORTANT:** The default password for all students is **`password123`**
 
 ### 7. Run the Server
 ```bash

@@ -8,6 +8,7 @@ from .views_instructor_quizzes import *
 from .views_instructor_questions import *
 from .views_instructor_grading import *
 from rest_framework_simplejwt.views import TokenRefreshView, TokenVerifyView
+from .views_student import StudentCurrentQuizzesView, StudentEnrolledCoursesView
 
 urlpatterns = [
     path('auth/login/', LoginView.as_view(), name='login'),
@@ -33,4 +34,6 @@ urlpatterns = [
     path('instructor/submissions/<int:submission_id>/feedback/', InstructorSubmissionFeedbackView.as_view(), name='instructor_submission_feedback'),
     path('instructor/answers/<int:answer_id>/grade/', InstructorGradeAnswerView.as_view(), name='instructor_grade_answer'),
     path('instructor/profile/edit/', InstructorProfileEditView.as_view(), name='instructor_profile_edit'),
+    path('student/quizzes/current/', StudentCurrentQuizzesView.as_view(), name='student_current_quizzes'),
+    path('student/courses/', StudentEnrolledCoursesView.as_view(), name='student_enrolled_courses'),
 ]
