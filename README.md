@@ -208,17 +208,17 @@ python manage.py runserver
      ```json
      {
        "id": 5,
-    "title": "Quiz2",
-    "course_id": 1,
-    "course_name": "Math 101",
-    "week_number": 1,
-    "start_date": "2025-07-20T09:00:00+03:00",
-    "end_date": "2025-07-20T10:00:00+03:00",
-    "duration": 60,
-    "total_points": 100,
-    "created_at": "2025-07-18T04:30:16.318838+03:00",
-    "updated_at": "2025-07-18T05:29:03.000000+03:00"
-  }
+      "title": "Quiz2",
+      "course_id": 1,
+      "course_name": "Math 101",
+      "week_number": 1,
+      "start_date": "2025-07-20T09:00:00+03:00",
+      "end_date": "2025-07-20T10:00:00+03:00",
+      "duration": 60,
+      "total_points": 100,
+      "created_at": "2025-07-18T04:30:16.318838+03:00",
+      "updated_at": "2025-07-18T05:29:03.000000+03:00"
+    }
   ```
   or
   ```json
