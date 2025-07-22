@@ -3,9 +3,9 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
 from .permissions import IsInstructor
-from quizroom.models.courses.models import Course, InstructorCourse, StudentCourse
-from quizroom.models.users.models import CustomUser
-from .serializers import StudentListSerializer, UserSerializer
+from quizroom.models.courses.models import Course, StudentCourse
+from quizroom.models.users.models import CustomUser, StudentProfile
+from .serializers import StudentListSerializer, StudentSerializer
 
 class InstructorAllStudentsView(APIView):
     permission_classes = [IsAuthenticated, IsInstructor]
@@ -47,13 +47,22 @@ class UpdateStudentProfileView(APIView):
         except CustomUser.DoesNotExist:
             return Response({'detail': 'Student not found.'}, status=status.HTTP_404_NOT_FOUND)
         data = request.data
-        allowed_fields = {'name', 'email'}
+        allowed_fields = {'name', 'email','password','level'}
         updated = False
         for field in allowed_fields:
             if field in data:
-                setattr(student, field, data[field])
-                updated = True
+                if field == "level":
+                    profile, _ = StudentProfile.objects.get_or_create(user=student)
+                    profile.level = data["level"]
+                    profile.save()
+                    updated = True
+                elif field == "password":
+                    student.set_password(data["password"])
+                    updated = True
+                else:
+                    setattr(student, field, data[field])
+                    updated = True
         if updated:
             student.save()
-            return Response({'student': UserSerializer(student).data}, status=status.HTTP_200_OK)
+            return Response({'student': StudentSerializer(student).data}, status=status.HTTP_200_OK)
         return Response({'detail': 'No valid fields to update.'}, status=status.HTTP_400_BAD_REQUEST)

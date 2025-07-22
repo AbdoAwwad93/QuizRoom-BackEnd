@@ -107,14 +107,14 @@ python manage.py runserver
      ```
    - Response:
      ```json
-     { "student": { "id": 12, "email": "student@example.com", "name": "Student Name" } }
+     { "student": { "id": 12, "email": "student@example.com", "name": "Student Name", "level": 2 } }
      ```
 2. **List All Students Managed by Instructor**
    - **GET** `/api/instructor/students/`
    - Response:
      ```json
      [
-       { "id": 12, "email": "student@example.com", "name": "Student Name" }
+       { "id": 12, "email": "student@example.com", "name": "Student Name", "level": 2 }
      ]
      ```
 3. **Assign Student to Instructor's Course**
@@ -135,11 +135,11 @@ python manage.py runserver
    - **PATCH** `/api/instructor/students/<student_id>/update/`
    - Body:
      ```json
-     { "name": "New Name", "email": "newemail@example.com" }
+     { "name": "New Name", "email": "newemail@example.com", "password": "newpassword", "level": 2 }
      ```
    - Response:
      ```json
-     { "student": { "id": 12, "email": "newemail@example.com", "name": "New Name" } }
+     { "student": { "id": 12, "email": "newemail@example.com", "name": "New Name", "level": 2 } }
      ```
 5. **Remove Student from Instructor's Course**
    - **DELETE** `/api/instructor/students/<student_id>/remove/`
@@ -166,7 +166,7 @@ python manage.py runserver
    - Response:
      ```json
      [
-       { "id": 12, "email": "student@example.com", "name": "Student Name" }
+       { "id": 12, "email": "student@example.com", "name": "Student Name", "level": 2 }
      ]
      ```
 
@@ -191,7 +191,7 @@ python manage.py runserver
        }
      ]
      ```
-9. **Create a Quiz**
+9. **Create a Quiz** 
    - **POST** `/api/instructor/quizzes/`
    - Body:
      ```json
@@ -464,6 +464,117 @@ python manage.py runserver
      { "detail": "Name updated successfully.", "name": "New Instructor Name" }
      ```
 
+---
+### Quiz Endpoints
+1. **Quiz Details (with Questions)**
+   - **GET** `/api/quiz/<quiz_id>/`
+   - Returns quiz details and a list of all questions for that quiz.
+   - Response:
+     ```json
+     {
+       "id": 5,
+       "title": "Quiz2",
+       "course_id": 1,
+       "course_name": "Math 101",
+       "week_number": 1,
+       "start_date": "2025-07-20T09:00:00+03:00",
+       "end_date": "2025-07-20T10:00:00+03:00",
+       "duration": 60,
+       "total_points": 100,
+       "created_at": "2025-07-18T04:30:16.318838+03:00",
+       "updated_at": "2025-07-18T05:29:03.000000+03:00",
+       "questions": [
+         {
+           "id": 1,
+           "quiz": 5,
+           "question_text": "What is 2 + 2?",
+           "question_type": "short_answer",
+           "correct_answer": null,
+           "points": 5
+         }
+       ]
+     }
+     ```
+---
+### Student Endpoints
+
+1. **List All Quizzes for Student**
+   - **GET** `/api/student/quizzes/`
+   - Returns all quizzes for all courses the student is enrolled in.
+   - Response:
+     ```json
+     [
+       {
+         "id": 5,
+         "title": "Quiz2",
+         "course_id": 1,
+         "course_name": "Math 101",
+         "week_number": 1,
+         "start_date": "2025-07-20T09:00:00+03:00",
+         "end_date": "2025-07-20T10:00:00+03:00",
+         "duration": 60,
+         "total_points": 100,
+         "created_at": "2025-07-18T04:30:16.318838+03:00",
+         "updated_at": "2025-07-18T05:29:03.000000+03:00"
+       }
+     ]
+     ```
+
+2. **List Current (Active) Quizzes for Student**
+   - **GET** `/api/student/quizzes/current/`
+   - Returns quizzes for enrolled courses that are currently active (by date).
+
+3. **Retrieve Student's Quiz Submission (with Answers)**
+   - **GET** `/api/student/quizzes/<quiz_id>/submission/`
+   - Returns the student's submission for the specified quiz, including answers if submitted. If not submitted, returns `{"submission": null}`.
+   - Response (if submission exists):
+
+4. **List Student's Enrolled Courses**
+   - **GET** `/api/student/courses/`
+   - Returns a list of all courses the authenticated student is enrolled in.
+   - Response:
+     ```json
+     [
+       {
+         "id": 1,
+         "name": "Math 101",
+         "code": "MATH101",
+         "level": 2
+       },
+       {
+         "id": 2,
+         "name": "Physics 201",
+         "code": "PHYS201",
+         "level": 3
+       }
+     ]
+     ```
+
+     ```json
+     {
+       "id": 1,
+       "student": 12,
+       "quiz": 5,
+       "submission_date": "2025-07-20T12:00:00+03:00",
+       "grade": 95,
+       "feedback": "Great work!",
+       "graded_at": "2025-07-20T15:00:00+03:00",
+       "status": "graded",
+       "answers": [
+         {
+           "id": 101,
+           "question": 10,
+           "answer_text": "4",
+           "points": 5,
+           "feedback": "Correct!"
+         }
+       ]
+     }
+     ```
+   - Response (if no submission):
+     ```json
+     { "submission": null }
+     ```
 ---
 
 ## 🔒 Permissions & Roles

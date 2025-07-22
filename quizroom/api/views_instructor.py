@@ -5,7 +5,7 @@ from rest_framework.permissions import IsAuthenticated
 from django.contrib.auth import get_user_model
 from quizroom.models.users.models import StudentProfile
 from quizroom.models.courses.models import Course, StudentCourse
-from .serializers import StudentCreateSerializer, AssignCoursesSerializer, UserSerializer
+from .serializers import StudentCreateSerializer, StudentSerializer
 from .permissions import IsInstructor
 
 User = get_user_model()
@@ -36,7 +36,7 @@ class CreateStudentView(APIView):
         
         user = User.objects.create_user(email=email, password=password, name=name, role='student')
         StudentProfile.objects.create(user=user, level=level)
-        return Response({'student': UserSerializer(user).data}, status=status.HTTP_201_CREATED)
+        return Response({'student': StudentSerializer(user).data}, status=status.HTTP_201_CREATED)
 
 class AssignCoursesToStudentView(APIView):
     permission_classes = [IsAuthenticated, IsInstructor]

@@ -15,6 +15,18 @@ class UserSerializer(serializers.ModelSerializer):
         model = CustomUser
         fields = ('id', 'email', 'name', 'role')
 
+class StudentSerializer(serializers.ModelSerializer):
+    level = serializers.SerializerMethodField()
+    class Meta:
+        model = CustomUser
+        fields = ('id', 'email', 'name', 'role', 'level')
+
+    def get_level(self, obj):
+        try:
+            return obj.studentprofile.level
+        except Exception:
+            return None
+
 class StudentCreateSerializer(serializers.Serializer):
     email = serializers.EmailField()
     name = serializers.CharField(max_length=255)
@@ -28,7 +40,6 @@ class StudentCreateSerializer(serializers.Serializer):
     )
 
     def validate_courses(self, value):
-        # Only validate if courses is provided and not empty
         if value is not None and len(value) > 0:
             courses = Course.objects.filter(id__in=value)
             if courses.count() != len(value):
@@ -55,9 +66,16 @@ class CourseSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'code', 'level')
 
 class StudentListSerializer(serializers.ModelSerializer):
+    level = serializers.SerializerMethodField()
     class Meta:
         model = CustomUser
-        fields = ('id', 'email', 'name')
+        fields = ('id', 'email', 'name','level')
+    
+    def get_level(self, obj):
+        try:
+            return obj.studentprofile.level
+        except Exception:
+            return None
 
 class QuizSerializer(serializers.ModelSerializer):
     course_id = serializers.IntegerField(source='course.id', read_only=True)

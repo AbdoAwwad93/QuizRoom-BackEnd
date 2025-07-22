@@ -1,6 +1,6 @@
 # API URLs for QuizRoom
 from django.urls import path
-from .views import LoginView
+from .views import *
 from .views_instructor import *
 from .views_instructor_courses import *
 from .views_instructor_students import *
@@ -8,12 +8,13 @@ from .views_instructor_quizzes import *
 from .views_instructor_questions import *
 from .views_instructor_grading import *
 from rest_framework_simplejwt.views import TokenRefreshView, TokenVerifyView
-from .views_student import StudentCurrentQuizzesView, StudentEnrolledCoursesView
+from .views_student import *
 
 urlpatterns = [
     path('auth/login/', LoginView.as_view(), name='login'),
     path('auth/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('auth/verify/', TokenVerifyView.as_view(), name='token_verify'),
+    path('quiz/<int:quiz_id>/', QuizDetailView.as_view(), name='quiz_detail'),
     path('instructor/create-student/', CreateStudentView.as_view(), name='create_student'),
     path('instructor/students/<int:student_id>/assign-courses/', AssignCoursesToStudentView.as_view(), name='assign_courses_to_student'),
     path('instructor/courses/', InstructorCoursesView.as_view(), name='instructor_courses'),
@@ -34,6 +35,8 @@ urlpatterns = [
     path('instructor/submissions/<int:submission_id>/feedback/', InstructorSubmissionFeedbackView.as_view(), name='instructor_submission_feedback'),
     path('instructor/answers/<int:answer_id>/grade/', InstructorGradeAnswerView.as_view(), name='instructor_grade_answer'),
     path('instructor/profile/edit/', InstructorProfileEditView.as_view(), name='instructor_profile_edit'),
+    path('student/quizzes/', StudentAllQuizzesView.as_view(), name='student_all_quizzes'),
     path('student/quizzes/current/', StudentCurrentQuizzesView.as_view(), name='student_current_quizzes'),
     path('student/courses/', StudentEnrolledCoursesView.as_view(), name='student_enrolled_courses'),
+    path('student/quizzes/<int:quiz_id>/submission/', StudentQuizSubmissionView.as_view(), name='student_quiz_submission'),
 ]
