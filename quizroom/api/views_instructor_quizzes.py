@@ -7,29 +7,41 @@ from quizroom.models.courses.models import Course, InstructorCourse
 from quizroom.models.quizzes.models import Quiz
 from .serializers import QuizSerializer, QuizCreateSerializer
 from django.utils import timezone
+from .helpers import is_instructor_for_course, is_instructor_for_quiz
 
 class InstructorCourseQuizzesView(APIView):
+    """
+    API view for managing quizzes for instructors (CRUD operations).
+    """
     permission_classes = [IsAuthenticated, IsInstructor]
 
     def delete(self, request, quiz_id):
+        """
+        Delete a quiz if the instructor owns it.
+        """
         instructor = request.user
         quiz = Quiz.objects.filter(id=quiz_id).first()
         if not quiz:
             return Response({'detail': 'Quiz not found.'}, status=status.HTTP_404_NOT_FOUND)
-        course = quiz.course
-        if not Course.objects.filter(id=course.id, instructorcourse__instructor=instructor).exists():
+        if not is_instructor_for_quiz(quiz, instructor):
             return Response({'detail': 'You do not have permission to delete this quiz.'}, status=status.HTTP_403_FORBIDDEN)
         quiz.delete()
         return Response({'detail': 'Quiz deleted successfully.'}, status=status.HTTP_204_NO_CONTENT)
 
     def get(self, request):
+        """
+        List all quizzes for courses taught by the instructor.
+        """
         instructor = request.user
         course_ids = Course.objects.filter(instructorcourse__instructor=instructor).values_list('id', flat=True)
-        quizzes = Quiz.objects.filter(course_id__in=course_ids)
+        quizzes = Quiz.objects.filter(course_id__in=course_ids).select_related('course')
         serializer = QuizSerializer(quizzes, many=True)
         return Response(serializer.data)
 
     def post(self, request):
+        """
+        Create a new quiz for the instructor's course.
+        """
         instructor = request.user
         course = Course.objects.filter(instructorcourse__instructor=instructor).first()
         if not course:
@@ -49,11 +61,14 @@ class InstructorCourseQuizzesView(APIView):
         return Response(QuizSerializer(quiz).data, status=status.HTTP_201_CREATED)
 
     def patch(self, request, quiz_id):
+        """
+        Update quiz fields if instructor owns the quiz.
+        """
         instructor = request.user
         quiz = Quiz.objects.filter(id=quiz_id).first()
         if not quiz:
             return Response({'detail': 'Quiz not found.'}, status=status.HTTP_404_NOT_FOUND)
-        if not Course.objects.filter(id=quiz.course.id, instructorcourse__instructor=instructor).exists():
+        if not is_instructor_for_quiz(quiz, instructor):
             return Response({'detail': 'You do not have permission to edit this quiz.'}, status=status.HTTP_403_FORBIDDEN)
         allowed_fields = ['title', 'week_number', 'start_date', 'end_date', 'duration', 'total_points']
         data = request.data

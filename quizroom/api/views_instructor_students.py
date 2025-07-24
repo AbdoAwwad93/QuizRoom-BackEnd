@@ -6,39 +6,54 @@ from .permissions import IsInstructor
 from quizroom.models.courses.models import Course, StudentCourse
 from quizroom.models.users.models import CustomUser, StudentProfile
 from .serializers import StudentListSerializer, StudentSerializer
+from quizroom.api.helpers import is_instructor_for_course
 
 class InstructorAllStudentsView(APIView):
+    """
+    API view for instructors to list all students in their courses.
+    """
     permission_classes = [IsAuthenticated, IsInstructor]
 
     def get(self, request):
         instructor = request.user
-        instructor_course = Course.objects.filter(instructorcourse__instructor=instructor).first()
-        if not instructor_course:
+        courses = Course.objects.filter(instructorcourse__instructor=instructor)
+        if not courses.exists():
             return Response({'detail': 'Instructor is not assigned to any course.'}, status=status.HTTP_400_BAD_REQUEST)
-        student_ids = StudentCourse.objects.filter(course=instructor_course).values_list('student_id', flat=True).distinct()
+        student_ids = StudentCourse.objects.filter(course__in=courses).values_list('student_id', flat=True).distinct()
         students = CustomUser.objects.filter(id__in=student_ids, role='student')
         serializer = StudentListSerializer(students, many=True)
         return Response(serializer.data)
 
 class RemoveStudentFromCourseView(APIView):
+    """
+    API view for instructors to remove a student from their course.
+    """
     permission_classes = [IsAuthenticated, IsInstructor]
 
     def delete(self, request, student_id):
         instructor = request.user
-        instructor_course = Course.objects.filter(instructorcourse__instructor=instructor).first()
-        if not instructor_course:
+        courses = Course.objects.filter(instructorcourse__instructor=instructor)
+        if not courses.exists():
             return Response({'detail': 'Instructor is not assigned to any course.'}, status=status.HTTP_400_BAD_REQUEST)
         try:
             student = CustomUser.objects.get(id=student_id, role='student')
         except CustomUser.DoesNotExist:
             return Response({'detail': 'Student not found.'}, status=status.HTTP_404_NOT_FOUND)
-        deleted, _ = StudentCourse.objects.filter(student=student, course=instructor_course).delete()
+        deleted = False
+        for course in courses:
+            if is_instructor_for_course(course, instructor):
+                num_deleted, _ = StudentCourse.objects.filter(student=student, course=course).delete()
+                if num_deleted:
+                    deleted = True
         if deleted:
-            return Response({'detail': 'Student removed from your course.'}, status=status.HTTP_200_OK)
+            return Response({'detail': 'Student removed from your course(s).'}, status=status.HTTP_200_OK)
         else:
-            return Response({'detail': 'Student was not assigned to your course.'}, status=status.HTTP_404_NOT_FOUND)
+            return Response({'detail': 'Student was not assigned to your course(s).'}, status=status.HTTP_404_NOT_FOUND)
 
 class UpdateStudentProfileView(APIView):
+    """
+    API view for instructors to update a student's profile fields (name, email, password, level).
+    """
     permission_classes = [IsAuthenticated, IsInstructor]
 
     def patch(self, request, student_id):
@@ -47,7 +62,7 @@ class UpdateStudentProfileView(APIView):
         except CustomUser.DoesNotExist:
             return Response({'detail': 'Student not found.'}, status=status.HTTP_404_NOT_FOUND)
         data = request.data
-        allowed_fields = {'name', 'email','password','level'}
+        allowed_fields = {'name', 'email', 'password', 'level'}
         updated = False
         for field in allowed_fields:
             if field in data:

@@ -9,6 +9,9 @@ from quizroom.api.serializers import *
 from django.db import transaction
 
 class InstructorQuizSubmissionsListView(APIView):
+    """
+    List all quiz submissions for a given quiz, accessible only to the instructor who owns the course.
+    """
     permission_classes = [permissions.IsAuthenticated, IsInstructor]
 
     def get(self, request, quiz_id):
@@ -21,6 +24,9 @@ class InstructorQuizSubmissionsListView(APIView):
         return Response(serializer.data)
 
 class InstructorSubmissionDetailView(APIView):
+    """
+    Retrieve details for a single submission, instructor-only.
+    """
     permission_classes = [permissions.IsAuthenticated, IsInstructor]
 
     def get(self, request, submission_id):
@@ -31,11 +37,14 @@ class InstructorSubmissionDetailView(APIView):
                 quiz__course__instructorcourse__instructor=instructor
             )
         except StudentQuizSubmission.DoesNotExist:
-            return Response({'detail': 'Submission not found.'}, status=404)
+            return Response({'detail': 'Submission not found.'}, status=status.HTTP_404_NOT_FOUND)
         serializer = StudentQuizSubmissionSerializer(submission)
         return Response(serializer.data)
 
 class InstructorGradeAnswerView(APIView):
+    """
+    Grade a student's answer to a quiz question. Instructor-only.
+    """
     permission_classes = [permissions.IsAuthenticated, IsInstructor]
 
     @transaction.atomic
@@ -47,11 +56,11 @@ class InstructorGradeAnswerView(APIView):
                 submission__quiz__course__instructorcourse__instructor=instructor
             )
         except StudentAnswer.DoesNotExist:
-            return Response({'detail': 'Answer not found.'}, status=404)
+            return Response({'detail': 'Answer not found.'}, status=status.HTTP_404_NOT_FOUND)
         points = request.data.get('points')
         feedback = request.data.get('feedback', '')
         if points is None or not (0 <= points <= answer.question.points):
-            return Response({'detail': f'Points must be between 0 and {answer.question.points}.'}, status=400)
+            return Response({'detail': f'Points must be between 0 and {answer.question.points}.'}, status=status.HTTP_400_BAD_REQUEST)
         answer.points = points
         answer.feedback = feedback
         answer.save()
@@ -69,6 +78,9 @@ class InstructorGradeAnswerView(APIView):
         return Response({'detail': 'Answer graded successfully.'})
 
 class InstructorSubmissionFeedbackView(APIView):
+    """
+    Set feedback for a student's quiz submission, instructor-only.
+    """
     permission_classes = [permissions.IsAuthenticated, IsInstructor]
 
     def patch(self, request, submission_id):
@@ -79,15 +91,18 @@ class InstructorSubmissionFeedbackView(APIView):
                 quiz__course__instructorcourse__instructor=instructor
             )
         except StudentQuizSubmission.DoesNotExist:
-            return Response({'detail': 'Submission not found.'}, status=404)
+            return Response({'detail': 'Submission not found.'}, status=status.HTTP_404_NOT_FOUND)
         if submission.status != 'graded':
-            return Response({'detail': 'All answers must be graded before setting submission feedback.'}, status=400)
+            return Response({'detail': 'All answers must be graded before setting submission feedback.'}, status=status.HTTP_400_BAD_REQUEST)
         feedback = request.data.get('feedback', '')
         submission.feedback = feedback
         submission.save(update_fields=['feedback'])
         return Response({'detail': 'Submission feedback set.'})
 
 class InstructorReleaseQuizGradesView(APIView):
+    """
+    Release grades for all graded submissions for a quiz. Instructor-only.
+    """
     permission_classes = [permissions.IsAuthenticated, IsInstructor]
 
     def post(self, request, quiz_id):
@@ -98,4 +113,4 @@ class InstructorReleaseQuizGradesView(APIView):
             status='graded'
         )
         count = submissions.update(status='released')
-        return Response({'detail': f'{count} submissions released to students.'}, status=200)
+        return Response({'detail': f'{count} submissions released to students.'}, status=status.HTTP_200_OK)

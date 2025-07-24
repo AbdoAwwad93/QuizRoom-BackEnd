@@ -5,11 +5,15 @@ from rest_framework.permissions import IsAuthenticated
 from django.contrib.auth import get_user_model
 from quizroom.models.users.models import StudentProfile
 from quizroom.models.courses.models import Course, StudentCourse
-from .serializers import StudentCreateSerializer, StudentSerializer
+from .serializers import StudentCreateSerializer, StudentSerializer, InstructorProfileEditSerializer
 from .permissions import IsInstructor
+from quizroom.api.helpers import is_instructor_for_course
 
 User = get_user_model()
 class InstructorProfileEditView(APIView):
+    """
+    API view for instructors to edit their profile information.
+    """
     permission_classes = [permissions.IsAuthenticated, IsInstructor]
 
     def patch(self, request):
@@ -21,6 +25,9 @@ class InstructorProfileEditView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class CreateStudentView(APIView):
+    """
+    API view for instructors to create a new student user and profile.
+    """
     permission_classes = [IsAuthenticated, IsInstructor]
 
     def post(self, request):
@@ -39,19 +46,28 @@ class CreateStudentView(APIView):
         return Response({'student': StudentSerializer(user).data}, status=status.HTTP_201_CREATED)
 
 class AssignCoursesToStudentView(APIView):
+    """
+    API view for instructors to assign a student to one of their courses.
+    """
     permission_classes = [IsAuthenticated, IsInstructor]
 
     def post(self, request, student_id):
         instructor = request.user
-        instructor_course = Course.objects.filter(instructorcourse__instructor=instructor).first()
-        if not instructor_course:
+        courses = Course.objects.filter(instructorcourse__instructor=instructor)
+        if not courses.exists():
             return Response({'detail': 'Instructor is not assigned to any course.'}, status=status.HTTP_400_BAD_REQUEST)
         try:
             student = User.objects.get(id=student_id, role='student')
         except User.DoesNotExist:
             return Response({'detail': 'Student not found.'}, status=status.HTTP_404_NOT_FOUND)
-        already_assigned = StudentCourse.objects.filter(student=student, course=instructor_course).exists()
-        if already_assigned:
-            return Response({'detail': 'Student is already assigned to your course.'}, status=status.HTTP_200_OK)
-        StudentCourse.objects.create(student=student, course=instructor_course, status='active')
-        return Response({'detail': 'Student assigned to your course successfully.'}, status=status.HTTP_201_CREATED)
+        assigned = False
+        for course in courses:
+            if is_instructor_for_course(course, instructor):
+                already_assigned = StudentCourse.objects.filter(student=student, course=course).exists()
+                if not already_assigned:
+                    StudentCourse.objects.create(student=student, course=course, status='active')
+                    assigned = True
+        if assigned:
+            return Response({'detail': 'Student assigned to your course(s) successfully.'}, status=status.HTTP_201_CREATED)
+        else:
+            return Response({'detail': 'Student is already assigned to your course(s).'}, status=status.HTTP_200_OK)

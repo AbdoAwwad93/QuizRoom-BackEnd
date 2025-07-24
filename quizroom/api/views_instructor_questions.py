@@ -6,8 +6,12 @@ from .permissions import IsInstructor
 from quizroom.models.courses.models import Course
 from quizroom.models.quizzes.models import Quiz, Question
 from .serializers import QuestionCreateSerializer, QuestionSerializer
+from quizroom.api.helpers import is_instructor_for_course, is_instructor_for_quiz
 
 class InstructorQuizQuestionCreateView(APIView):
+    """
+    API view for instructors to create quiz questions.
+    """
     permission_classes = [IsAuthenticated, IsInstructor]
 
     def post(self, request, quiz_id):
@@ -15,7 +19,7 @@ class InstructorQuizQuestionCreateView(APIView):
         quiz = Quiz.objects.filter(id=quiz_id).first()
         if not quiz:
             return Response({'detail': 'Quiz not found.'}, status=status.HTTP_404_NOT_FOUND)
-        if not Course.objects.filter(id=quiz.course.id, instructorcourse__instructor=instructor).exists():
+        if not is_instructor_for_quiz(quiz, instructor):
             return Response({'detail': 'You do not have permission to add questions to this quiz.'}, status=status.HTTP_403_FORBIDDEN)
         serializer = QuestionCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -29,6 +33,9 @@ class InstructorQuizQuestionCreateView(APIView):
         return Response(QuestionSerializer(question).data, status=status.HTTP_201_CREATED)
 
 class InstructorQuizQuestionListView(APIView):
+    """
+    API view for instructors to list questions for a quiz.
+    """
     permission_classes = [IsAuthenticated, IsInstructor]
 
     def get(self, request, quiz_id):
@@ -36,13 +43,16 @@ class InstructorQuizQuestionListView(APIView):
         quiz = Quiz.objects.filter(id=quiz_id).first()
         if not quiz:
             return Response({'detail': 'Quiz not found.'}, status=status.HTTP_404_NOT_FOUND)
-        if not Course.objects.filter(id=quiz.course.id, instructorcourse__instructor=instructor).exists():
+        if not is_instructor_for_quiz(quiz, instructor):
             return Response({'detail': 'You do not have permission to view questions for this quiz.'}, status=status.HTTP_403_FORBIDDEN)
         questions = Question.objects.filter(quiz=quiz)
         serializer = QuestionSerializer(questions, many=True)
         return Response(serializer.data)
 
 class InstructorQuizQuestionEditRemoveView(APIView):
+    """
+    API view for instructors to edit or remove quiz questions.
+    """
     permission_classes = [IsAuthenticated, IsInstructor]
 
     def patch(self, request, question_id):
@@ -51,7 +61,7 @@ class InstructorQuizQuestionEditRemoveView(APIView):
         if not question:
             return Response({'detail': 'Question not found.'}, status=status.HTTP_404_NOT_FOUND)
         quiz = question.quiz
-        if not Course.objects.filter(id=quiz.course.id, instructorcourse__instructor=instructor).exists():
+        if not is_instructor_for_quiz(quiz, instructor):
             return Response({'detail': 'You do not have permission to edit this question.'}, status=status.HTTP_403_FORBIDDEN)
         allowed_fields = ['question_text', 'points']
         data = request.data
@@ -72,7 +82,7 @@ class InstructorQuizQuestionEditRemoveView(APIView):
         if not question:
             return Response({'detail': 'Question not found.'}, status=status.HTTP_404_NOT_FOUND)
         quiz = question.quiz
-        if not Course.objects.filter(id=quiz.course.id, instructorcourse__instructor=instructor).exists():
+        if not is_instructor_for_quiz(quiz, instructor):
             return Response({'detail': 'You do not have permission to remove this question.'}, status=status.HTTP_403_FORBIDDEN)
         question.delete()
         return Response({'detail': 'Question deleted successfully.'}, status=status.HTTP_204_NO_CONTENT)
