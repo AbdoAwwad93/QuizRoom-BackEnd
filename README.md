@@ -5,15 +5,16 @@ Backend for a student quiz management system, supporting both desktop and web cl
 ---
 
 ## 📑 Table of Contents
-- [Introduction](#introduction)
-- [Getting Started](#getting-started)
-- [Configuration](#configuration)
-- [Sample Data](#sample-data)
-- [Running the Server](#running-the-server)
-- [Authentication](#authentication)
+- [Getting Started](#-getting-started)
+- [Create and Activate a Virtual Environment](#2-create-and-activate-a-virtual-environment)
+- [Install Dependencies](#3-install-dependencies)
+- [Configure Environment Variables](#4-configure-environment-variables)
+- [Apply Migrations](#5-apply-migrations)
+- [Generate Sample Data](#6-generate-sample-data)
+- [Authentication](#️-authentication)
 - [Student Management (Instructor Only)](#student-management-instructor-only)
-- [Quiz Management](#quiz-management-instructor-only)
-- [Course Management](#course-management-instructor-only)
+- [Quiz Management (Instructor Only)](#quiz-management-instructor-only)
+- [Course Management (Instructor Only)](#course-management-instructor-only)
 - [Quiz Endpoints](#quiz-endpoints)
 - [Student Endpoints](#student-endpoints)
 ---
