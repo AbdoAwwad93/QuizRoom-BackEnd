@@ -9,3 +9,4 @@ Faker>=19.3.0
 factory-boy>=3.3.0
 dj-database-url>=0.5.0
 setuptools>=65.0.0
+gunicorn>=21.0.0
