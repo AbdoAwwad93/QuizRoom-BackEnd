@@ -12,10 +12,10 @@ Backend for a student quiz management system, supporting both desktop and web cl
 - [Running the Server](#running-the-server)
 - [Authentication](#authentication)
 - [Student Management (Instructor Only)](#student-management-instructor-only)
-  - [Quiz Management](#quiz-management-instructor-only)
-  - [Course Management](#course-management-instructor-only)
-  - [Quiz Endpoints](#quiz-endpoints)
-  - [Student Endpoints](#student-endpoints)
+- [Quiz Management](#quiz-management-instructor-only)
+- [Course Management](#course-management-instructor-only)
+- [Quiz Endpoints](#quiz-endpoints)
+- [Student Endpoints](#student-endpoints)
 ---
 ## 🚀 Getting Started
 
