@@ -1,5 +1,18 @@
 # QuizRoom BackEnd
 
+## 📑 Table of Contents
+- [Getting Started](#-getting-started)
+- [Authentication](#-authentication)
+- [API Endpoints](#-api-endpoints)
+  - [Student Management](#student-management-instructor-only)
+  - [Quiz Management](#quiz-management-instructor-only)
+  - [Instructor Profile](#instructor-profile)
+- [Sample Data](#-generate-sample-data)
+- [Running the Server](#-run-the-server)
+- [Contributing](#contributing)
+- [License](#license)
+
+
 Backend for a student quiz management system, supporting both desktop and web clients, with full RESTful APIs for authentication, student/instructor management, course assignments, and more.
 
 ---
@@ -201,7 +214,11 @@ python manage.py runserver
        "start_date": "2025-07-20T09:00:00+03:00",
        "end_date": "2025-07-20T10:00:00+03:00",
        "duration": 60,
-       "total_points": 100
+       "total_points": 100,
+       "questions": [
+         {"question_text": "What is 2+2?", "points": 10},
+         {"question_text": "Name a primary color.", "points": 5}
+       ]
      }
      ```
    - Response:
