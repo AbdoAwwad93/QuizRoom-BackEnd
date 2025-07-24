@@ -1,22 +1,22 @@
 # QuizRoom BackEnd
 
-## 📑 Table of Contents
-- [Getting Started](#-getting-started)
-- [Authentication](#-authentication)
-- [API Endpoints](#-api-endpoints)
-  - [Student Management](#student-management-instructor-only)
-  - [Quiz Management](#quiz-management-instructor-only)
-  - [Instructor Profile](#instructor-profile)
-- [Sample Data](#-generate-sample-data)
-- [Running the Server](#-run-the-server)
-- [Contributing](#contributing)
-- [License](#license)
-
-
 Backend for a student quiz management system, supporting both desktop and web clients, with full RESTful APIs for authentication, student/instructor management, course assignments, and more.
 
 ---
 
+## 📑 Table of Contents
+- [Introduction](#introduction)
+- [Getting Started](#getting-started)
+- [Configuration](#configuration)
+- [Sample Data](#sample-data)
+- [Running the Server](#running-the-server)
+- [Authentication](#authentication)
+- [Student Management (Instructor Only)](#student-management-instructor-only)
+  - [Quiz Management](#quiz-management-instructor-only)
+  - [Course Management](#course-management-instructor-only)
+  - [Quiz Endpoints](#quiz-endpoints)
+  - [Student Endpoints](#student-endpoints)
+---
 ## 🚀 Getting Started
 
 ### 1. Clone the Repository
@@ -469,17 +469,7 @@ python manage.py runserver
      { "detail": "3 submissions released to students." }
      ```
 
-### Profile Management (Instructor Only)
-22. **Edit Instructor Profile**
-   - **PATCH** `/api/instructor/profile/edit/`
-   - Body:
-     ```json
-     { "name": "New Instructor Name" }
-     ```
-   - Response:
-     ```json
-     { "detail": "Name updated successfully.", "name": "New Instructor Name" }
-     ```
+
 
 ---
 ### Quiz Endpoints
