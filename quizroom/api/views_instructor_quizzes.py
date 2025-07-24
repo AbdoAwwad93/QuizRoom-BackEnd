@@ -40,8 +40,10 @@ class InstructorCourseQuizzesView(APIView):
 
     def post(self, request):
         """
-        Create a new quiz for the instructor's course.
+        Create a new quiz for the instructor's course. Accepts a list of questions to be created with the quiz.
+        Each question only requires question_text and points; question_type is set to 'short_answer' and correct_answer to None by default.
         """
+        from quizroom.models.quizzes.models import Question
         instructor = request.user
         course = Course.objects.filter(instructorcourse__instructor=instructor).first()
         if not course:
@@ -58,7 +60,29 @@ class InstructorCourseQuizzesView(APIView):
             total_points=serializer.validated_data['total_points'],
             created_at=timezone.now(),
         )
-        return Response(QuizSerializer(quiz).data, status=status.HTTP_201_CREATED)
+        questions_data = request.data.get('questions', [])
+        created_questions = []
+        for q in questions_data:
+            question = Question.objects.create(
+                quiz=quiz,
+                question_text=q.get('question_text'),
+                question_type='short_answer',
+                correct_answer=None,
+                points=q.get('points', 1),
+            )
+            created_questions.append(question)
+        quiz_data = QuizSerializer(quiz).data
+        quiz_data['questions'] = [
+            {
+                'id': q.id,
+                'question_text': q.question_text,
+                'question_type': q.question_type,
+                'points': q.points,
+                'correct_answer': q.correct_answer,
+            }
+            for q in created_questions
+        ]
+        return Response(quiz_data, status=status.HTTP_201_CREATED)
 
     def patch(self, request, quiz_id):
         """
