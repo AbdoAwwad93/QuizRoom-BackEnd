@@ -26,7 +26,7 @@ class InstructorProfileEditView(APIView):
 
 class CreateStudentView(APIView):
     """
-    API view for instructors to create a new student user and profile and assign him to his course.
+    API view for instructors to create a new student user and profile and assign him to his courses and assign him to his course.
     """
     permission_classes = [IsAuthenticated, IsInstructor]
 

@@ -547,7 +547,8 @@ python manage.py runserver
          "id": 1,
          "name": "Math 101",
          "code": "MATH101",
-         "level": 2
+         "level": 2,
+         "instructor_name": "Mohamed"
        },
        {
          "id": 2,
@@ -556,32 +557,6 @@ python manage.py runserver
          "level": 3
        }
      ]
-     ```
-
-     ```json
-     {
-       "id": 1,
-       "student": 12,
-       "quiz": 5,
-       "submission_date": "2025-07-20T12:00:00+03:00",
-       "grade": 95,
-       "feedback": "Great work!",
-       "graded_at": "2025-07-20T15:00:00+03:00",
-       "status": "graded",
-       "answers": [
-         {
-           "id": 101,
-           "question": 10,
-           "answer_text": "4",
-           "points": 5,
-           "feedback": "Correct!"
-         }
-       ]
-     }
-     ```
-   - Response (if no submission):
-     ```json
-     { "submission": null }
      ```
 
 ---
@@ -615,6 +590,16 @@ python manage.py runserver
 3. **Submit Quiz**
    - **POST** `/api/student/quizzes/<quiz_id>/submit/`
    - Submits the entire quiz for grading.
+   - Body:
+     ```json
+      {
+        "answers": [
+          {"question_id": 1, "answer_text": "Answer for Q1"},
+          {"question_id": 2, "answer_text": "Answer for Q2"},
+          ...
+        ]
+      }
+    ```
    - Response:
      ```json
      {
@@ -686,6 +671,26 @@ python manage.py runserver
    - **GET** `/api/student/quizzes/<quiz_id>/submission/`
    - Returns the student's submission for the specified quiz, including answers if submitted. If not submitted, returns `{"submission": null}`.
    - Response (if submission exists):
+     ```json
+     {
+       "submission_id": 1,
+       "quiz_id": 5,
+       "status": "graded",
+       "questions": [
+         {
+           "question_id": 1,
+           "question_text": "What is 2 + 2?",
+           "answer_text": "4",
+           "points": 5,
+           "feedback": "Correct!"
+         }
+       ],
+       "grade": 95,
+       "feedback": "Great work!",
+       "graded_at": "2025-07-20T15:00:00+03:00"
+     }
+     ```
+     
 
 4. **List Student's Enrolled Courses**
    - **GET** `/api/student/courses/`
