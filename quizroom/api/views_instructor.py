@@ -26,7 +26,7 @@ class InstructorProfileEditView(APIView):
 
 class CreateStudentView(APIView):
     """
-    API view for instructors to create a new student user and profile.
+    API view for instructors to create a new student user and profile and assign him to his course.
     """
     permission_classes = [IsAuthenticated, IsInstructor]
 
@@ -43,6 +43,13 @@ class CreateStudentView(APIView):
         
         user = User.objects.create_user(email=email, password=password, name=name, role='student')
         StudentProfile.objects.create(user=user, level=level)
+
+        instructor = request.user
+        courses = Course.objects.filter(instructorcourse__instructor=instructor)
+        for course in courses:
+            if not StudentCourse.objects.filter(student=user, course=course).exists():
+                StudentCourse.objects.create(student=user, course=course, status='active')
+
         return Response({'student': StudentSerializer(user).data}, status=status.HTTP_201_CREATED)
 
 class AssignCoursesToStudentView(APIView):
