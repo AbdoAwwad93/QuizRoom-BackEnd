@@ -15,8 +15,10 @@ Backend for a student quiz management system, supporting both desktop and web cl
 - [Student Management (Instructor Only)](#student-management-instructor-only)
 - [Quiz Management (Instructor Only)](#quiz-management-instructor-only)
 - [Course Management (Instructor Only)](#course-management-instructor-only)
+- [Quiz Grading (Instructor Only)](#quiz-grading-instructor-only)
 - [Quiz Endpoints](#quiz-endpoints)
 - [Student Endpoints](#student-endpoints)
+- [Student Quiz Interaction](#student-quiz-interaction)
 ---
 ## 🚀 Getting Started
 
@@ -105,11 +107,10 @@ python manage.py runserver
   - Body: `{ "token": "<any_token>" }`
   - Response: Validity info
 
----
-
 ### Student Management (Instructor Only)
 1. **Create Student**
    - **POST** `/api/instructor/create-student/`
+   - Description: Create a new student and assign them to the instructor's course.
    - Body:
      ```json
      {
@@ -125,6 +126,7 @@ python manage.py runserver
      ```
 2. **List All Students Managed by Instructor**
    - **GET** `/api/instructor/students/`
+   - Description: Retrieve a list of all students managed by the authenticated instructor.
    - Response:
      ```json
      [
@@ -133,6 +135,7 @@ python manage.py runserver
      ```
 3. **Assign Student to Instructor's Course**
    - **POST** `/api/instructor/students/<student_id>/assign-courses/`
+   - Description: Assign an existing student to the instructor's course.
    - Body:
      ```json
      {}
@@ -147,6 +150,7 @@ python manage.py runserver
      ```
 4. **Update Student Profile**
    - **PATCH** `/api/instructor/students/<student_id>/update/`
+   - Description: Update the profile information (name, email, password, level) for a student.
    - Body:
      ```json
      { "name": "New Name", "email": "newemail@example.com", "password": "newpassword", "level": 2 }
@@ -157,6 +161,7 @@ python manage.py runserver
      ```
 5. **Remove Student from Instructor's Course**
    - **DELETE** `/api/instructor/students/<student_id>/remove/`
+   - Description: Remove a student from the instructor's course.
    - Response:
      ```json
      { "detail": "Student removed from your course." }
@@ -169,6 +174,7 @@ python manage.py runserver
 ### Course Management (Instructor Only)
 6. **List Instructor's Courses**
    - **GET** `/api/instructor/courses/`
+   - Description: Retrieve a list of all courses managed by the authenticated instructor.
    - Response:
      ```json
      [
@@ -177,6 +183,7 @@ python manage.py runserver
      ```
 7. **List Students in a Course**
    - **GET** `/api/instructor/courses/<course_id>/students/`
+   - Description: Retrieve a list of all students enrolled in a specific course managed by the instructor.
    - Response:
      ```json
      [
@@ -187,6 +194,7 @@ python manage.py runserver
 ### Quiz Management (Instructor Only)
 8. **List All Quizzes for Instructor's Courses**
    - **GET** `/api/instructor/quizzes/`
+   - Description: Retrieve all quizzes created for courses managed by the instructor.
    - Response:
      ```json
      [
@@ -207,6 +215,7 @@ python manage.py runserver
      ```
 9. **Create a Quiz** 
    - **POST** `/api/instructor/quizzes/`
+   - Description: Create a new quiz for the instructor's course.
    - Body:
      ```json
      {
@@ -226,189 +235,133 @@ python manage.py runserver
      ```json
      {
        "id": 5,
-      "title": "Quiz2",
-      "course_id": 1,
-      "course_name": "Math 101",
-      "week_number": 1,
-      "start_date": "2025-07-20T09:00:00+03:00",
-      "end_date": "2025-07-20T10:00:00+03:00",
-      "duration": 60,
-      "total_points": 100,
-      "created_at": "2025-07-18T04:30:16.318838+03:00",
-      "updated_at": "2025-07-18T05:29:03.000000+03:00"
-    }
-  ```
-  or
-  ```json
-  { "detail": "Instructor is not assigned to any course." }
-  ```
-#### 10. List All Questions in a Quiz
-- **GET** `/api/instructor/quizzes/<quiz_id>/questions/`
-- Response:
-  ```json
-  [
-    {
-      "id": 1,
-      "quiz": 5,
-      "question_text": "What is 2 + 2?",
-      "question_type": "short_answer",
-      "correct_answer": null,
-      "points": 5
-    }
-  ]
-  ```
-  or
-  ```json
-  { "detail": "Quiz not found." }
-  ```
-  or
-  ```json
-  { "detail": "You do not have permission to view questions for this quiz." }
-  ```
-#### 11. Create Question for a Quiz
-- **POST** `/api/instructor/quizzes/<quiz_id>/questions/create/`
-- Body:
-  ```json
-  {
-    "question_text": "What is 2 + 2?",
-    "points": 5
-  }
-  ```
-- Response:
-  ```json
-  {
-    "id": 1,
-    "quiz": 5,
-    "question_text": "What is 2 + 2?",
-    "question_type": "short_answer",
-    "correct_answer": null,
-    "points": 5
-  }
-  ```
-  or
-  ```json
-  { "detail": "Quiz not found." }
-  ```
-  or
-  ```json
-  { "detail": "You do not have permission to add questions to this quiz." }
-  ```
-
-#### 12. Edit a Quiz
-- **PATCH** `/api/instructor/quizzes/<quiz_id>/edit/`
-- Body (any subset of fields):
-  ```json
-  {
-    "title": "Updated Quiz Title",
-    "week_number": 2,
-    "start_date": "2025-07-20T09:00:00+03:00",
-    "end_date": "2025-07-20T10:00:00+03:00",
-    "duration": 60,
-    "total_points": 100
-  }
-  ```
-- Response:
-  ```json
-  {
-    "id": 5,
-    "title": "Updated Quiz Title",
-    "course_id": 1,
-    "course_name": "Math 101",
-    "week_number": 2,
-    "start_date": "2025-07-20T09:00:00+03:00",
-    "end_date": "2025-07-20T10:00:00+03:00",
-    "duration": 60,
-    "total_points": 100,
-    "created_at": "2025-07-18T04:30:16.318838+03:00",
-    "updated_at": "2025-07-18T05:29:03.000000+03:00"
-  }
-  ```
-  or
-  ```json
-  { "detail": "Quiz not found." }
-  ```
-  or
-  ```json
-  { "detail": "You do not have permission to edit this quiz." }
-  ```
-  or
-  ```json
-  { "detail": "No valid fields to update." }
-  ```
-
-#### 14. Edit a Quiz Question
-- **PATCH** `/api/instructor/questions/<question_id>/edit/`
-- Body:
-  ```json
-  {
-    "question_text": "What is the capital of France?",
-    "points": 10
-  }
-  ```
-- Response:
-  ```json
-  {
-    "id": 2,
-    "quiz": 5,
-    "question_text": "What is the capital of France?",
-    "question_type": "short_answer",
-    "correct_answer": null,
-    "points": 10
-  }
-  ```
-  or
-  ```json
-  { "detail": "Question not found." }
-  ```
-  or
-  ```json
-  { "detail": "You do not have permission to edit this question." }
-  ```
-  or
-  ```json
-  { "detail": "No valid fields to update." }
-  ```
-
-#### 15. Remove a Quiz Question
-- **DELETE** `/api/instructor/questions/<question_id>/remove/`
-- Response:
-  ```json
-  { "detail": "Question deleted successfully." }
-  ```
-  or
-  ```json
-  { "detail": "Question not found." }
-  ```
-  or
-  ```json
-  { "detail": "You do not have permission to remove this question." }
-  ```
-
-#### 16. Remove a Quiz
-- **DELETE** `/api/instructor/quizzes/<quiz_id>/remove/`
-- Response:
-  ```json
-  { "detail": "Quiz deleted successfully." }
-  ```
-  or
-  ```json
-  { "detail": "Quiz not found." }
-  ```
-  or
-  ```json
-  { "detail": "You do not have permission to delete this quiz." }
-  ```
-
+       "title": "Quiz2",
+       "course_id": 1,
+       "course_name": "Math 101",
+       "week_number": 1,
+       "start_date": "2025-07-20T09:00:00+03:00",
+       "end_date": "2025-07-20T10:00:00+03:00",
+       "duration": 60,
+       "total_points": 100,
+       "created_at": "2025-07-18T04:30:16.318838+03:00",
+       "updated_at": "2025-07-18T05:29:03.000000+03:00"
+     }
+     ```
+   
+10. **List All Questions in a Quiz**
+   - **GET** `/api/instructor/quizzes/<quiz_id>/questions/`
+   - Description: Retrieve all questions for a specific quiz managed by the instructor.
+   - Response:
+     ```json
+     [
+       {
+         "id": 1,
+         "quiz": 5,
+         "question_text": "What is 2 + 2?",
+         "question_type": "short_answer",
+         "correct_answer": null,
+         "points": 5
+       }
+     ]
+     ```
+11. **Create Question for a Quiz**
+   - **POST** `/api/instructor/quizzes/<quiz_id>/questions/create/`
+   - Description: Add a new question to a specific quiz.
+   - Body:
+     ```json
+     {
+       "question_text": "What is 2 + 2?",
+       "points": 5
+     }
+     ```
+   - Response:
+     ```json
+     {
+       "id": 1,
+       "quiz": 5,
+       "question_text": "What is 2 + 2?",
+       "question_type": "short_answer",
+       "correct_answer": null,
+       "points": 5
+     }
+     ```
+12. **Edit a Quiz**
+   - **PATCH** `/api/instructor/quizzes/<quiz_id>/edit/`
+   - Description: Update details of an existing quiz (title, dates, duration, etc.).
+   - Body (any subset of fields):
+     ```json
+     {
+       "title": "Updated Quiz Title",
+       "week_number": 2,
+       "start_date": "2025-07-20T09:00:00+03:00",
+       "end_date": "2025-07-20T10:00:00+03:00",
+       "duration": 60,
+       "total_points": 100
+     }
+     ```
+   - Response:
+     ```json
+     {
+       "id": 5,
+       "title": "Updated Quiz Title",
+       "course_id": 1,
+       "course_name": "Math 101",
+       "week_number": 2,
+       "start_date": "2025-07-20T09:00:00+03:00",
+       "end_date": "2025-07-20T10:00:00+03:00",
+       "duration": 60,
+       "total_points": 100,
+       "created_at": "2025-07-18T04:30:16.318838+03:00",
+       "updated_at": "2025-07-18T05:29:03.000000+03:00"
+     }
+     ```
+13. **Edit a Quiz Question**
+   - **PATCH** `/api/instructor/questions/<question_id>/edit/`
+   - Description: Update the text or points of a specific quiz question.
+   - Body:
+     ```json
+     {
+       "question_text": "What is the capital of France?",
+       "points": 10
+     }
+     ```
+   - Response:
+     ```json
+     {
+       "id": 2,
+       "quiz": 5,
+       "question_text": "What is the capital of France?",
+       "question_type": "short_answer",
+       "correct_answer": null,
+       "points": 10
+     }
+     ```
+14. **Remove a Quiz Question**
+   - **DELETE** `/api/instructor/questions/<question_id>/remove/`
+   - Description: Delete a question from a quiz.
+   - Response:
+     ```json
+     { "detail": "Question deleted successfully." }
+     ```
+15. **Remove a Quiz**
+   - **DELETE** `/api/instructor/quizzes/<quiz_id>/remove/`
+   - Description: Delete a quiz from the instructor's course.
+   - Response:
+     ```json
+     { "detail": "Quiz deleted successfully." }
+     ```
 
 ### Quiz Grading (Instructor Only)
-17. **List Submissions for a Quiz**
+16. **List Submissions for a Quiz**
    - **GET** `/api/instructor/quizzes/<quiz_id>/submissions/`
+   - Description: List all student submissions for a specific quiz for grading.
    - Response:
      ```json
      [
        {
          "id": 1,
          "student": 12,
+         "student_name": "Student Name",
          "quiz": 5,
          "submission_date": "2025-07-20T12:00:00+03:00",
          "grade": 95,
@@ -419,13 +372,15 @@ python manage.py runserver
        }
      ]
      ```
-18. **Retrieve a Submission with Answers**
+17. **Retrieve a Submission with Answers**
    - **GET** `/api/instructor/submissions/<submission_id>/`
+   - Description: Retrieve a specific student's quiz submission, including all answers and grading details.
    - Response:
      ```json
      {
        "id": 1,
        "student": 12,
+       "student_name": "Student Name",
        "quiz": 5,
        "submission_date": "2025-07-20T12:00:00+03:00",
        "grade": 95,
@@ -443,32 +398,51 @@ python manage.py runserver
        ]
      }
      ```
-19. **Grade a Single Answer**
-   - **PATCH** `/api/instructor/answers/<answer_id>/grade/`
-   - Body:
-     ```json
-     { "points": 4, "feedback": "Almost correct." }
-     ```
-   - Response:
-     ```json
-     { "detail": "Answer graded successfully." }
-     ```
-20. **Set Overall Submission Feedback**
-   - **PATCH** `/api/instructor/submissions/<submission_id>/feedback/`
-   - Body:
-     ```json
-     { "feedback": "Excellent effort overall!" }
-     ```
-   - Response:
-     ```json
-     { "detail": "Submission feedback set." }
-     ```
-21. **Release All Grades/Feedback for a Quiz**
-   - **POST** `/api/instructor/quizzes/<quiz_id>/release/`
-   - Response:
-     ```json
-     { "detail": "3 submissions released to students." }
-     ```
+19. **Grade All Answers in a Submission**
+    - **PATCH** `/api/instructor/submissions/<submission_id>/grade/`
+    - Description: Grade all answers for a student's quiz submission in one request.
+    - Body:
+      ```json
+      {
+        "answers": [
+          { "answer_id": 101, "points": 5, "feedback": "Good!" },
+          { "answer_id": 102, "points": 3, "feedback": "Partial credit." }
+        ]
+      }
+      ```
+    - Response:
+      ```json
+      { "detail": "All answers graded successfully." }
+      ```
+20. **Edit Grade/Feedback for a Single Answer**
+    - **PATCH** `/api/instructor/answers/<answer_id>/edit-grade/`
+    - Description: Edit the grade and feedback for a single answer.
+    - Body:
+      ```json
+      { "points": 4, "feedback": "Almost correct." }
+      ```
+    - Response:
+      ```json
+      { "detail": "Answer graded successfully." }
+      ```
+21. **Edit Overall Submission Feedback**
+    - **PATCH** `/api/instructor/submissions/<submission_id>/edit-feedback/`
+    - Description: Edit the overall feedback for a student's quiz submission after grading.
+    - Body:
+      ```json
+      { "feedback": "Excellent effort overall!" }
+      ```
+    - Response:
+      ```json
+      { "detail": "Submission feedback set." }
+      ```
+22. **Release All Grades/Feedback for a Quiz**
+    - **POST** `/api/instructor/quizzes/<quiz_id>/release/`
+    - Description: Release all graded submissions for a quiz, making grades and feedback visible to students.
+    - Response:
+      ```json
+      { "detail": "3 submissions released to students." }
+      ```
 
 
 
@@ -502,13 +476,12 @@ python manage.py runserver
          }
        ]
      }
-     ```
 ---
 ### Student Endpoints
 
 1. **List All Quizzes for Student**
    - **GET** `/api/student/quizzes/`
-   - Returns all quizzes for all courses the student is enrolled in.
+   - Description: Retrieve all quizzes for all courses the authenticated student is enrolled in.
    - Response:
      ```json
      [
@@ -530,11 +503,11 @@ python manage.py runserver
 
 2. **List Current (Active) Quizzes for Student**
    - **GET** `/api/student/quizzes/current/`
-   - Returns quizzes for enrolled courses that are currently active (by date).
+   - Description: Retrieve quizzes for enrolled courses that are currently active (by date).
 
 3. **Retrieve Student's Quiz Submission (with Answers)**
    - **GET** `/api/student/quizzes/<quiz_id>/submission/`
-   - Returns the student's submission for the specified quiz, including answers if submitted. If not submitted, returns `{"submission": null}`.
+   - Description: Retrieve the authenticated student's submission for a quiz, including all answers and feedback if released. Returns `{"submission": null}` if not submitted.
    - Response (if submission exists):
      ```json
      {
@@ -558,7 +531,7 @@ python manage.py runserver
 
 4. **List Student's Enrolled Courses**
    - **GET** `/api/student/courses/`
-   - Returns a list of all courses the authenticated student is enrolled in.
+   - Description: Retrieve a list of all courses the authenticated student is enrolled in, including instructor names.
    - Response:
      ```json
      [
@@ -583,7 +556,7 @@ python manage.py runserver
 
 1. **List Questions for a Quiz (Student)**
    - **GET** `/api/student/quizzes/<quiz_id>/questions/`
-   - Returns a list of questions for the specified quiz.
+   - Description: Retrieve all questions for a quiz available to the authenticated student.
    - Response:
      ```json
      [
@@ -598,17 +571,17 @@ python manage.py runserver
 
 2. **Submit Answer for a Question**
    - **POST** `/api/student/quizzes/<quiz_id>/questions/<question_id>/answer/`
+   - Description: Submit an answer for a specific question in a quiz.
    - Body:
      ```json
      {
        "answer_text": "4"
      }
      ```
-   - Submits the student's answer for the specified question.
 
 3. **Submit Quiz**
    - **POST** `/api/student/quizzes/<quiz_id>/submit/`
-   - Submits the entire quiz for grading.
+   - Description: Submit all answers for a quiz in bulk for grading and finalization.
    - Body:
      ```json
       {
