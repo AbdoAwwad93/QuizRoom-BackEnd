@@ -54,8 +54,14 @@ class StudentEnrolledCoursesView(APIView):
     def get(self, request):
         student = request.user
         courses = Course.objects.filter(studentcourse__student=student)
-        serializer = CourseSerializer(courses, many=True)
-        return Response(serializer.data)
+        data = []
+        for course in courses:
+            instructor_rel = course.instructorcourse_set.first()
+            instructor_name = instructor_rel.instructor.name if instructor_rel else None
+            course_data = CourseSerializer(course).data
+            course_data['instructor_name'] = instructor_name
+            data.append(course_data)
+        return Response(data)
 
 class StudentQuizSubmissionView(APIView):
     """
@@ -72,11 +78,33 @@ class StudentQuizSubmissionView(APIView):
         if not is_student_enrolled_in_quiz(quiz, student):
             return Response({'detail': 'You are not enrolled in this course.'}, status=403)
         submission = StudentQuizSubmission.objects.filter(student=student, quiz=quiz).first()
-        if submission:
-            data = StudentQuizSubmissionSerializer(submission).data
-            return Response(data)
-        else:
+        if not submission:
             return Response({'submission': None})
+
+        questions = Question.objects.filter(quiz=quiz).order_by('id')
+        answers = {a.question_id: a for a in StudentAnswer.objects.filter(submission=submission)}
+        questions_data = []
+        for q in questions:
+            answer = answers.get(q.id)
+            questions_data.append({
+                'question_id': q.id,
+                'question_text': q.question_text,
+                'answer_text': answer.answer_text if answer else '',
+                'points': answer.points if (answer and submission.status in ['released']) else None,
+                'feedback': answer.feedback if (answer and submission.status in ['released']) else None
+            })
+
+        response = {
+            'submission_id': submission.id,
+            'quiz_id': quiz.id,
+            'status': submission.status,
+            'questions': questions_data,
+        }
+        if submission.status in ['released']:
+            response['grade'] = submission.grade
+            response['feedback'] = submission.feedback
+            response['graded_at'] = submission.graded_at
+        return Response(response)
 
 class StudentQuizQuestionsView(APIView):
     """
@@ -161,7 +189,25 @@ class StudentSubmitQuizView(APIView):
         submission, _ = StudentQuizSubmission.objects.get_or_create(student=student, quiz=quiz)
         if submission.status != 'ungraded':
             return Response({'detail': 'Submission is already finalized.'}, status=403)
+
+        answers = request.data.get('answers', [])
+        if not isinstance(answers, list):
+            return Response({'detail': 'Answers must be a list.'}, status=400)
+        from quizroom.models.quizzes.models import Question
+        for answer in answers:
+            question_id = answer.get('question_id')
+            answer_text = answer.get('answer_text', '').strip()
+            if not question_id or not answer_text:
+                return Response({'detail': 'Each answer must have question_id and answer_text.'}, status=400)
+            try:
+                question = Question.objects.get(id=question_id, quiz=quiz)
+            except Question.DoesNotExist:
+                return Response({'detail': f'Question {question_id} not found in this quiz.'}, status=404)
+            ans_obj, _ = StudentAnswer.objects.get_or_create(submission=submission, question=question)
+            ans_obj.answer_text = answer_text
+            ans_obj.save()
+
         submission.status = 'grading'
         submission.submission_date = timezone.now()
         submission.save(update_fields=['status', 'submission_date'])
-        return Response({'detail': 'Quiz submitted successfully.'})
+        return Response({'detail': 'Quiz submitted and answers saved successfully.'})
