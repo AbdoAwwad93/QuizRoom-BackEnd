@@ -41,9 +41,9 @@ class InstructorSubmissionDetailView(APIView):
         serializer = StudentQuizSubmissionSerializer(submission)
         return Response(serializer.data)
 
-class InstructorGradeAnswerView(APIView):
+class InstructorEditAnswerGradeView(APIView):
     """
-    Grade a student's answer to a quiz question. Instructor-only.
+    Edit the grade and feedback for a student's answer to a quiz question. Instructor-only.
     """
     permission_classes = [permissions.IsAuthenticated, IsInstructor]
 
@@ -77,9 +77,9 @@ class InstructorGradeAnswerView(APIView):
         submission.save(update_fields=['grade', 'status', 'graded_at'])
         return Response({'detail': 'Answer graded successfully.'})
 
-class InstructorSubmissionFeedbackView(APIView):
+class InstructorEditSubmissionFeedbackView(APIView):
     """
-    Set feedback for a student's quiz submission, instructor-only.
+    Edit the overall feedback for a student's quiz submission, instructor-only.
     """
     permission_classes = [permissions.IsAuthenticated, IsInstructor]
 
@@ -114,3 +114,50 @@ class InstructorReleaseQuizGradesView(APIView):
         )
         count = submissions.update(status='released')
         return Response({'detail': f'{count} submissions released to students.'}, status=status.HTTP_200_OK)
+
+class InstructorGradeSubmissionView(APIView):
+    """
+    grade all answers for a student quiz submission in one request. Instructor-only.
+    """
+    permission_classes = [permissions.IsAuthenticated, IsInstructor]
+
+    @transaction.atomic
+    def patch(self, request, submission_id):
+        instructor = request.user
+        try:
+            submission = StudentQuizSubmission.objects.select_related('quiz', 'student').get(
+                id=submission_id,
+                quiz__course__instructorcourse__instructor=instructor
+            )
+        except StudentQuizSubmission.DoesNotExist:
+            return Response({'detail': 'Submission not found.'}, status=status.HTTP_404_NOT_FOUND)
+        answers_data = request.data.get('answers', [])
+        if not isinstance(answers_data, list):
+            return Response({'detail': 'answers must be a list.'}, status=status.HTTP_400_BAD_REQUEST)
+        answer_objs = {a.id: a for a in StudentAnswer.objects.filter(submission=submission)}
+        for entry in answers_data:
+            answer_id = entry.get('answer_id')
+            points = entry.get('points')
+            feedback = entry.get('feedback', '')
+            answer = answer_objs.get(answer_id)
+            if not answer:
+                return Response({'detail': f'Answer {answer_id} not found in this submission.'}, status=status.HTTP_404_NOT_FOUND)
+            if points is None or not (0 <= points <= answer.question.points):
+                return Response({'detail': f'Points for answer {answer_id} must be between 0 and {answer.question.points}.'}, status=status.HTTP_400_BAD_REQUEST)
+            answer.points = points
+            answer.feedback = feedback
+            answer.save()
+        submission_feedback = request.data.get('feedback')
+        if submission_feedback is not None:
+            submission.feedback = submission_feedback
+        answers = StudentAnswer.objects.filter(submission=submission)
+        total = sum(a.points for a in answers if a.points is not None)
+        quiz_total = submission.quiz.total_points
+        submission.grade = min(total, quiz_total)
+        if all(a.points is not None for a in answers):
+            submission.status = 'graded'
+            submission.graded_at = timezone.now()
+        else:
+            submission.status = 'grading'
+        submission.save(update_fields=['grade', 'status', 'graded_at', 'feedback'])
+        return Response({'detail': 'All answers graded successfully.'})
