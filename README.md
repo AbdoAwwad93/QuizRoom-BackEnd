@@ -639,7 +639,7 @@ python manage.py runserver
      }
      ```
 ---
-### Student Endpoints
+
 
 1. **List All Quizzes for Student**
    - **GET** `/api/student/quizzes/`
