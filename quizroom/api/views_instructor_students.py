@@ -24,6 +24,17 @@ class InstructorAllStudentsView(APIView):
         serializer = StudentListSerializer(students, many=True)
         return Response(serializer.data)
 
+class InstructorAllStudentsSystemView(APIView):
+    """
+    API view for instructors to list all students in the system (not just their courses).
+    """
+    permission_classes = [IsAuthenticated, IsInstructor]
+
+    def get(self, request):
+        students = CustomUser.objects.filter(role='student')
+        serializer = StudentListSerializer(students, many=True)
+        return Response(serializer.data)
+
 class RemoveStudentFromCourseView(APIView):
     """
     API view for instructors to remove a student from their course.

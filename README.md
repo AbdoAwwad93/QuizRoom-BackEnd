@@ -108,7 +108,7 @@ python manage.py runserver
   - Response: Validity info
 
 ### Student Management (Instructor Only)
-1. **Create Student**
+- **Create Student**
    - **POST** `/api/instructor/create-student/`
    - Description: Create a new student and assign them to the instructor's course.
    - Body:
@@ -124,7 +124,7 @@ python manage.py runserver
      ```json
      { "student": { "id": 12, "email": "student@example.com", "name": "Student Name", "level": 2 } }
      ```
-2. **List All Students Managed by Instructor**
+- **List All Students Managed by Instructor**
    - **GET** `/api/instructor/students/`
    - Description: Retrieve a list of all students managed by the authenticated instructor.
    - Response:
@@ -133,7 +133,16 @@ python manage.py runserver
        { "id": 12, "email": "student@example.com", "name": "Student Name", "level": 2 }
      ]
      ```
-3. **Assign Student to Instructor's Course**
+- **List All Students in the System (Instructor Only)**
+   - **GET** `/api/instructor/students/all/`
+   - Description: Retrieve a list of all students in the system (not just those managed by the instructor). Requires instructor authentication.
+   - Response:
+     ```json
+     [
+       { "id": 12, "email": "student@example.com", "name": "Student Name", "level": 2 }
+     ]
+     ```
+- **Assign Student to Instructor's Course**
    - **POST** `/api/instructor/students/<student_id>/assign-courses/`
    - Description: Assign an existing student to the instructor's course.
    - Body:
@@ -148,7 +157,7 @@ python manage.py runserver
      ```json
      { "detail": "Student is already assigned to your course." }
      ```
-4. **Update Student Profile**
+- **Update Student Profile**
    - **PATCH** `/api/instructor/students/<student_id>/update/`
    - Description: Update the profile information (name, email, password, level) for a student.
    - Body:
@@ -159,7 +168,7 @@ python manage.py runserver
      ```json
      { "student": { "id": 12, "email": "newemail@example.com", "name": "New Name", "level": 2 } }
      ```
-5. **Remove Student from Instructor's Course**
+- **Remove Student from Instructor's Course**
    - **DELETE** `/api/instructor/students/<student_id>/remove/`
    - Description: Remove a student from the instructor's course.
    - Response:
@@ -172,7 +181,7 @@ python manage.py runserver
      ```
 
 ### Course Management (Instructor Only)
-6. **List Instructor's Courses**
+- **List Instructor's Courses**
    - **GET** `/api/instructor/courses/`
    - Description: Retrieve a list of all courses managed by the authenticated instructor.
    - Response:
@@ -181,7 +190,7 @@ python manage.py runserver
        { "id": 1, "name": "Math 101", "code": "MATH101", "level": 2 }
      ]
      ```
-7. **List Students in a Course**
+- **List Students in a Course**
    - **GET** `/api/instructor/courses/<course_id>/students/`
    - Description: Retrieve a list of all students enrolled in a specific course managed by the instructor.
    - Response:
@@ -192,7 +201,7 @@ python manage.py runserver
      ```
 
 ### Quiz Management (Instructor Only)
-8. **List All Quizzes for Instructor's Courses**
+- **List All Quizzes for Instructor's Courses**
    - **GET** `/api/instructor/quizzes/`
    - Description: Retrieve all quizzes created for courses managed by the instructor.
    - Response:
@@ -213,7 +222,7 @@ python manage.py runserver
        }
      ]
      ```
-9. **Create a Quiz** 
+- **Create a Quiz** 
    - **POST** `/api/instructor/quizzes/`
    - Description: Create a new quiz for the instructor's course.
    - Body:
@@ -248,7 +257,7 @@ python manage.py runserver
      }
      ```
    
-10. **List All Questions in a Quiz**
+- **List All Questions in a Quiz**
    - **GET** `/api/instructor/quizzes/<quiz_id>/questions/`
    - Description: Retrieve all questions for a specific quiz managed by the instructor.
    - Response:
@@ -264,7 +273,7 @@ python manage.py runserver
        }
      ]
      ```
-11. **Create Question for a Quiz**
+- **Create Question for a Quiz**
    - **POST** `/api/instructor/quizzes/<quiz_id>/questions/create/`
    - Description: Add a new question to a specific quiz.
    - Body:
@@ -285,7 +294,7 @@ python manage.py runserver
        "points": 5
      }
      ```
-12. **Edit a Quiz**
+- **Edit a Quiz**
    - **PATCH** `/api/instructor/quizzes/<quiz_id>/edit/`
    - Description: Update details of an existing quiz (title, dates, duration, etc.).
    - Body (any subset of fields):
@@ -315,7 +324,7 @@ python manage.py runserver
        "updated_at": "2025-07-18T05:29:03.000000+03:00"
      }
      ```
-13. **Edit a Quiz Question**
+- **Edit a Quiz Question**
    - **PATCH** `/api/instructor/questions/<question_id>/edit/`
    - Description: Update the text or points of a specific quiz question.
    - Body:
@@ -336,14 +345,14 @@ python manage.py runserver
        "points": 10
      }
      ```
-14. **Remove a Quiz Question**
+- **Remove a Quiz Question**
    - **DELETE** `/api/instructor/questions/<question_id>/remove/`
    - Description: Delete a question from a quiz.
    - Response:
      ```json
      { "detail": "Question deleted successfully." }
      ```
-15. **Remove a Quiz**
+- **Remove a Quiz**
    - **DELETE** `/api/instructor/quizzes/<quiz_id>/remove/`
    - Description: Delete a quiz from the instructor's course.
    - Response:
@@ -352,7 +361,7 @@ python manage.py runserver
      ```
 
 ### Quiz Grading (Instructor Only)
-16. **List Submissions for a Quiz**
+- **List Submissions for a Quiz**
    - **GET** `/api/instructor/quizzes/<quiz_id>/submissions/`
    - Description: List all student submissions for a specific quiz for grading.
    - Response:
@@ -372,7 +381,7 @@ python manage.py runserver
        }
      ]
      ```
-17. **Retrieve a Submission with Answers**
+- **Retrieve a Submission with Answers**
    - **GET** `/api/instructor/submissions/<submission_id>/`
    - Description: Retrieve a specific student's quiz submission, including all answers and grading details.
    - Response:
@@ -398,7 +407,7 @@ python manage.py runserver
        ]
      }
      ```
-19. **Grade All Answers in a Submission**
+- **Grade All Answers in a Submission**
     - **PATCH** `/api/instructor/submissions/<submission_id>/grade/`
     - Description: Grade all answers for a student's quiz submission in one request.
     - Body:
@@ -414,7 +423,7 @@ python manage.py runserver
       ```json
       { "detail": "All answers graded successfully." }
       ```
-20. **Edit Grade/Feedback for a Single Answer**
+- **Edit Grade/Feedback for a Single Answer**
     - **PATCH** `/api/instructor/answers/<answer_id>/edit-grade/`
     - Description: Edit the grade and feedback for a single answer.
     - Body:
@@ -425,7 +434,7 @@ python manage.py runserver
       ```json
       { "detail": "Answer graded successfully." }
       ```
-21. **Edit Overall Submission Feedback**
+- **Edit Overall Submission Feedback**
     - **PATCH** `/api/instructor/submissions/<submission_id>/edit-feedback/`
     - Description: Edit the overall feedback for a student's quiz submission after grading.
     - Body:
@@ -436,7 +445,7 @@ python manage.py runserver
       ```json
       { "detail": "Submission feedback set." }
       ```
-22. **Release All Grades/Feedback for a Quiz**
+- **Release All Grades/Feedback for a Quiz**
     - **POST** `/api/instructor/quizzes/<quiz_id>/release/`
     - Description: Release all graded submissions for a quiz, making grades and feedback visible to students.
     - Response:
@@ -444,11 +453,8 @@ python manage.py runserver
       { "detail": "3 submissions released to students." }
       ```
 
-
-
----
 ### Quiz Endpoints
-1. **Quiz Details (with Questions)**
+- **Quiz Details (with Questions)**
    - **GET** `/api/quiz/<quiz_id>/`
    - Returns quiz details and a list of all questions for that quiz.
    - Response:
@@ -479,7 +485,7 @@ python manage.py runserver
 ---
 ### Student Endpoints
 
-1. **List All Quizzes for Student**
+- **List All Quizzes for Student**
    - **GET** `/api/student/quizzes/`
    - Description: Retrieve all quizzes for all courses the authenticated student is enrolled in.
    - Response:
@@ -501,11 +507,11 @@ python manage.py runserver
      ]
      ```
 
-2. **List Current (Active) Quizzes for Student**
+- **List Current (Active) Quizzes for Student**
    - **GET** `/api/student/quizzes/current/`
    - Description: Retrieve quizzes for enrolled courses that are currently active (by date).
 
-3. **Retrieve Student's Quiz Submission (with Answers)**
+- **Retrieve Student's Quiz Submission (with Answers)**
    - **GET** `/api/student/quizzes/<quiz_id>/submission/`
    - Description: Retrieve the authenticated student's submission for a quiz, including all answers and feedback if released. Returns `{"submission": null}` if not submitted.
    - Response (if submission exists):
@@ -529,7 +535,7 @@ python manage.py runserver
      }
      ```
 
-4. **List Student's Enrolled Courses**
+- **List Student's Enrolled Courses**
    - **GET** `/api/student/courses/`
    - Description: Retrieve a list of all courses the authenticated student is enrolled in, including instructor names.
    - Response:
@@ -554,7 +560,7 @@ python manage.py runserver
 ---
 ### Student Quiz Interaction
 
-1. **List Questions for a Quiz (Student)**
+- **List Questions for a Quiz (Student)**
    - **GET** `/api/student/quizzes/<quiz_id>/questions/`
    - Description: Retrieve all questions for a quiz available to the authenticated student.
    - Response:
@@ -569,7 +575,7 @@ python manage.py runserver
      ]
      ```
 
-2. **Submit Answer for a Question**
+- **Submit Answer for a Question**
    - **POST** `/api/student/quizzes/<quiz_id>/questions/<question_id>/answer/`
    - Description: Submit an answer for a specific question in a quiz.
    - Body:
@@ -579,7 +585,7 @@ python manage.py runserver
      }
      ```
 
-3. **Submit Quiz**
+- **Submit Quiz**
    - **POST** `/api/student/quizzes/<quiz_id>/submit/`
    - Description: Submit all answers for a quiz in bulk for grading and finalization.
    - Body:
@@ -601,7 +607,7 @@ python manage.py runserver
 
 ---
 ### Quiz Endpoints
-1. **Quiz Details (with Questions)**
+- **Quiz Details (with Questions)**
    - **GET** `/api/quiz/<quiz_id>/`
    - Returns quiz details and a list of all questions for that quiz.
    - Response:
