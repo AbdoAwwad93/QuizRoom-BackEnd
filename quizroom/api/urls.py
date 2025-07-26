@@ -20,6 +20,7 @@ urlpatterns = [
     path('instructor/courses/', InstructorCoursesView.as_view(), name='instructor_courses'),
     path('instructor/courses/<int:course_id>/students/', CourseStudentsView.as_view(), name='course_students'),
     path('instructor/students/', InstructorAllStudentsView.as_view(), name='instructor_all_students'),
+    path('instructor/students/all/', InstructorAllStudentsSystemView.as_view(), name='instructor_all_students_system'),
     path('instructor/students/<int:student_id>/remove/', RemoveStudentFromCourseView.as_view(), name='remove_student_from_course'),
     path('instructor/students/<int:student_id>/update/', UpdateStudentProfileView.as_view(), name='update_student_profile'),
     path('instructor/quizzes/', InstructorCourseQuizzesView.as_view(), name='instructor_course_quizzes'),
