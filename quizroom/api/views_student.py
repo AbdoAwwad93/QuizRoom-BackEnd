@@ -155,7 +155,7 @@ class StudentSaveAnswerView(APIView):
         if not is_student_enrolled_in_quiz(quiz, student):
             return Response({'detail': 'You are not enrolled in this course.'}, status=403)
         now = timezone.now()
-        if now < quiz.start_date or now > quiz.end_date:
+        if now < quiz.start_date:
             return Response({'detail': 'Quiz is not active.'}, status=403)
         submission, _ = StudentQuizSubmission.objects.get_or_create(student=student, quiz=quiz)
         if submission.status != 'ungraded':
@@ -184,12 +184,11 @@ class StudentSubmitQuizView(APIView):
         if not is_student_enrolled_in_quiz(quiz, student):
             return Response({'detail': 'You are not enrolled in this course.'}, status=403)
         now = timezone.now()
-        if now < quiz.start_date or now > quiz.end_date:
+        if now < quiz.start_date:
             return Response({'detail': 'Quiz is not active.'}, status=403)
         submission, _ = StudentQuizSubmission.objects.get_or_create(student=student, quiz=quiz)
         if submission.status != 'ungraded':
             return Response({'detail': 'Submission is already finalized.'}, status=403)
-
         answers = request.data.get('answers', [])
         if not isinstance(answers, list):
             return Response({'detail': 'Answers must be a list.'}, status=400)
