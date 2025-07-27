@@ -11,7 +11,9 @@ from rest_framework_simplejwt.views import TokenRefreshView, TokenVerifyView
 from .views_student import *
 
 urlpatterns = [
-    path('auth/login/', LoginView.as_view(), name='login'),
+
+    path('auth/student-login/', StudentLoginView.as_view(), name='student_login'),
+    path('auth/instructor-login/', InstructorLoginView.as_view(), name='instructor_login'),
     path('auth/logout/', LogoutView.as_view(), name='logout'),
     path('auth/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('auth/verify/', TokenVerifyView.as_view(), name='token_verify'),

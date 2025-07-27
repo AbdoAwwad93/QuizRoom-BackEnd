@@ -17,7 +17,8 @@ from quizroom.models.courses.models import Course
 from quizroom.models.quizzes.models import *
 from quizroom.api.serializers import QuizSerializer, QuestionSerializer
 from quizroom.api.permissions import IsStudent, IsInstructor
-class LoginView(APIView):
+
+class StudentLoginView(APIView):
     permission_classes = [AllowAny]
     def post(self, request):
         serializer = LoginSerializer(data=request.data)
@@ -28,6 +29,29 @@ class LoginView(APIView):
         if user is not None:
             if not user.is_active:
                 return Response({'detail': 'Account is disabled.'}, status=status.HTTP_403_FORBIDDEN)
+            if getattr(user, 'role', None) != 'student':
+                return Response({'detail': 'Invalid credentials.'}, status=status.HTTP_401_UNAUTHORIZED)
+            refresh = RefreshToken.for_user(user)
+            return Response({
+                'user': UserSerializer(user).data,
+                'refresh': str(refresh),
+                'access': str(refresh.access_token),
+            })
+        return Response({'detail': 'Invalid credentials.'}, status=status.HTTP_401_UNAUTHORIZED)
+
+class InstructorLoginView(APIView):
+    permission_classes = [AllowAny]
+    def post(self, request):
+        serializer = LoginSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        email = serializer.validated_data['email']
+        password = serializer.validated_data['password']
+        user = authenticate(request, email=email, password=password)
+        if user is not None:
+            if not user.is_active:
+                return Response({'detail': 'Account is disabled.'}, status=status.HTTP_403_FORBIDDEN)
+            if getattr(user, 'role', None) != 'instructor':
+                return Response({'detail': 'Invalid credentials.'}, status=status.HTTP_401_UNAUTHORIZED)
             refresh = RefreshToken.for_user(user)
             return Response({
                 'user': UserSerializer(user).data,

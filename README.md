@@ -97,9 +97,29 @@ python manage.py runserver
 ## 📚 API Endpoints
 
 ### Authentication
-- **POST** `/api/auth/login/`
-  - Body: `{ "email": "user@example.com", "password": "yourpassword" }`
-  - Response: `{ "user": {...}, "refresh": "...", "access": "..." }`
+- **POST** `/api/auth/student-login/`
+  - Body: `{ "email": "student@example.com", "password": "yourpassword" }`
+  - Description: Login endpoint for students only. Only users with the student role can authenticate here.
+  - Response (success):
+    ```json
+    { "user": { ... }, "refresh": "...", "access": "..." }
+    ```
+  - Response (invalid credentials or not a student):
+    ```json
+    { "detail": "Invalid credentials." }
+    ```
+
+- **POST** `/api/auth/instructor-login/`
+  - Body: `{ "email": "instructor@example.com", "password": "yourpassword" }`
+  - Description: Login endpoint for instructors only. Only users with the instructor role can authenticate here.
+  - Response (success):
+    ```json
+    { "user": { ... }, "refresh": "...", "access": "..." }
+    ```
+  - Response (invalid credentials or not an instructor):
+    ```json
+    { "detail": "Invalid credentials." }
+    ```
 - **POST** `/api/auth/refresh/`
   - Body: `{ "refresh": "<refresh_token>" }`
   - Response: `{ "access": "..." }`
