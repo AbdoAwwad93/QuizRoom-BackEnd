@@ -88,7 +88,7 @@ python manage.py runserver
     ```
     Authorization: Bearer <access_token>
     ```
-    ⚠️ **Note:** For testing purposes, the access token in this project is valid for 1 year (default is 5 minutes in production). This is configured in `settings.py` under `SIMPLE_JWT['ACCESS_TOKEN_LIFETIME']`.
+    ⚠️ **Note:** The access token in this project is valid for 5 minutes. This is configured in `settings.py` under `SIMPLE_JWT['ACCESS_TOKEN_LIFETIME']`.
   - **Refresh Token:** Used to obtain a new access token when the old one expires. 
 - To refresh your access token, use the `/api/auth/refresh/` endpoint with your refresh token.
 
