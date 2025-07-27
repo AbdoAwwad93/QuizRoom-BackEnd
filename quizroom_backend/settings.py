@@ -118,7 +118,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(days=365),  # 1 year
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5),
 }
 
 

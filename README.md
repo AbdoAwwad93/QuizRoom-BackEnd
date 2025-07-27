@@ -103,6 +103,21 @@ python manage.py runserver
 - **POST** `/api/auth/refresh/`
   - Body: `{ "refresh": "<refresh_token>" }`
   - Response: `{ "access": "..." }`
+- **POST** `/api/auth/logout/`
+  - Body: `{ "refresh": "<refresh_token>" }`
+  - Description: Blacklists the provided refresh token, logging the user out from this session/device.
+  - Response (success):
+    ```json
+    { "detail": "Logout successful." }
+    ```
+  - Response (error):
+    ```json
+    { "detail": "Refresh token is required." }
+    ```
+    or
+    ```json
+    { "detail": "Invalid or expired token." }
+    ```
 - **POST** `/api/auth/verify/`
   - Body: `{ "token": "<any_token>" }`
   - Response: Validity info

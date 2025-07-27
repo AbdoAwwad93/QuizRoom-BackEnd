@@ -7,6 +7,10 @@ from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import AllowAny
 from rest_framework.permissions import IsAuthenticated
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken, OutstandingToken
+from rest_framework_simplejwt.exceptions import TokenError
+
 from .serializers import LoginSerializer, UserSerializer
 from quizroom.models.users.models import CustomUser
 from quizroom.models.courses.models import Course
@@ -31,6 +35,20 @@ class LoginView(APIView):
                 'access': str(refresh.access_token),
             })
         return Response({'detail': 'Invalid credentials.'}, status=status.HTTP_401_UNAUTHORIZED)
+
+class LogoutView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        refresh_token = request.data.get('refresh')
+        if not refresh_token:
+            return Response({'detail': 'Refresh token is required.'}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            token = RefreshToken(refresh_token)
+            token.blacklist()
+            return Response({'detail': 'Logout successful.'}, status=status.HTTP_205_RESET_CONTENT)
+        except TokenError:
+            return Response({'detail': 'Invalid or expired token.'}, status=status.HTTP_400_BAD_REQUEST)
 
 class QuizDetailView(APIView):
     permission_classes = [IsAuthenticated]
