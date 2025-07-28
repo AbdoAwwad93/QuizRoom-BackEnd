@@ -10,8 +10,8 @@ from .views_instructor_grading import *
 from rest_framework_simplejwt.views import TokenRefreshView, TokenVerifyView
 from .views_student import *
 from .views_statistics import (
-    StudentsPerCourseView, QuizScoresView, SubmissionRatesView, GradeDistributionView, StudentProgressView,
-    StudentPerformanceSummaryView, StudentProgressTrackingView
+    QuizScoresView, SubmissionRatesView, GradeDistributionView, StudentProgressView,
+    StudentPerformanceSummaryView
 )
 
 urlpatterns = [
@@ -52,12 +52,10 @@ urlpatterns = [
     path('student/quizzes/<int:quiz_id>/questions/<int:question_id>/answer/', StudentSaveAnswerView.as_view(), name='student_save_answer'),
     path('student/quizzes/<int:quiz_id>/submit/', StudentSubmitQuizView.as_view(), name='student_submit_quiz'),
     
-    path('instructor/statistics/students-per-course/', StudentsPerCourseView.as_view(), name='instructor_students_per_course'),
-    path('instructor/statistics/quiz-scores/', QuizScoresView.as_view(), name='instructor_quiz_scores'),
-    path('instructor/statistics/submission-rates/', SubmissionRatesView.as_view(), name='instructor_submission_rates'),
-    path('instructor/statistics/grade-distribution/', GradeDistributionView.as_view(), name='instructor_grade_distribution'),
+    path('instructor/statistics/quiz-scores/<int:quiz_id>/', QuizScoresView.as_view(), name='instructor_quiz_scores'),
+    path('instructor/statistics/submission-rates/<int:quiz_id>/', SubmissionRatesView.as_view(), name='instructor_submission_rates'),
+    path('instructor/statistics/grade-distribution/<int:quiz_id>/', GradeDistributionView.as_view(), name='instructor_grade_distribution'),
     path('instructor/statistics/student-progress/', StudentProgressView.as_view(), name='instructor_student_progress'),   
-    path('student/statistics/performance-summary/', StudentPerformanceSummaryView.as_view(), name='student_performance_summary'),
-    path('student/statistics/progress/', StudentProgressTrackingView.as_view(), name='student_progress_tracking'),
+    path('student/statistics/performance-summary/<int:course_id>/', StudentPerformanceSummaryView.as_view(), name='student_performance_summary'),
 
 ]
