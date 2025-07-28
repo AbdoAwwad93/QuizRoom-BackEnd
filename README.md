@@ -672,6 +672,127 @@ python manage.py runserver
      }
      ```
 ---
+
+### Statistics Endpoints
+
+#### Instructor Statistics
+- **GET** `/api/instructor/statistics/students-per-course/`
+  - Description: For each course taught by the instructor, returns the number of enrolled students.
+  - Response:
+    ```json
+    {
+      "results": [
+        { "course_id": 1, "course_name": "Math 101", "student_count": 25 },
+        { "course_id": 2, "course_name": "Physics 201", "student_count": 18 }
+      ]
+    }
+    ```
+
+- **GET** `/api/instructor/statistics/quiz-scores/?course_id=<course_id>&quiz_id=<quiz_id>`
+  - Description: For each quiz (optionally filtered by course or quiz), returns average, highest, and lowest scores.
+  - Response:
+    ```json
+    {
+      "results": [
+        {
+          "quiz_id": 5,
+          "quiz_title": "Quiz2",
+          "average_score": 82.5,
+          "highest_score": 95,
+          "lowest_score": 60
+        }
+      ]
+    }
+    ```
+
+- **GET** `/api/instructor/statistics/submission-rates/?quiz_id=<quiz_id>`
+  - Description: Shows which students submitted or did not submit for a given quiz.
+  - Response:
+    ```json
+    {
+      "quiz_id": 5,
+      "quiz_title": "Quiz2",
+      "submitted_students": [
+        { "id": 12, "email": "student1@example.com", "name": "Student One" }
+      ],
+      "not_submitted_students": [
+        { "id": 13, "email": "student2@example.com", "name": "Student Two" }
+      ]
+    }
+    ```
+
+- **GET** `/api/instructor/statistics/grade-distribution/?quiz_id=<quiz_id>`
+  - Description: Returns grade distribution (histogram) for a quiz.
+  - Response:
+    ```json
+    {
+      "quiz_id": 5,
+      "quiz_title": "Quiz2",
+      "grade_distribution": {
+        "0-9": 0,
+        "10-19": 0,
+        "20-29": 0,
+        "30-39": 0,
+        "40-49": 1,
+        "50-59": 2,
+        "60-69": 4,
+        "70-79": 6,
+        "80-89": 8,
+        "90-100": 3
+      }
+    }
+    ```
+
+- **GET** `/api/instructor/statistics/student-progress/?course_id=<course_id>`
+  - Description: For each student in the course, shows number of completed and pending quizzes.
+  - Response:
+    ```json
+    {
+      "course_id": 1,
+      "course_name": "Math 101",
+      "student_progress": [
+        { "student_id": 12, "student_name": "Student One", "completed_quizzes": 3, "pending_quizzes": 1 },
+        { "student_id": 13, "student_name": "Student Two", "completed_quizzes": 2, "pending_quizzes": 2 }
+      ]
+    }
+    ```
+
+#### Student Statistics
+- **GET** `/api/student/statistics/performance-summary/`
+  - Description: Returns the student’s average score and ranking in each course.
+  - Response:
+    ```json
+    {
+      "results": [
+        {
+          "course_id": 1,
+          "course_name": "Math 101",
+          "average_score": 85.0,
+          "ranking": 2,
+          "total_students": 25
+        }
+      ]
+    }
+    ```
+
+- **GET** `/api/student/statistics/progress/`
+  - Description: Tracks quizzes completed and scores over time for each course.
+  - Response:
+    ```json
+    {
+      "results": [
+        {
+          "course_id": 1,
+          "course_name": "Math 101",
+          "progress": [
+            { "quiz_id": 5, "quiz_title": "Quiz2", "score": 90, "status": "graded" },
+            { "quiz_id": 6, "quiz_title": "Quiz3", "score": null, "status": "not_started" }
+          ]
+        }
+      ]
+    }
+    ```
+
 ## 🔒 Permissions & Roles
 - **Students**: Can only access endpoints meant for students (to be implemented).
 - **Instructors**: Can only access instructor endpoints (enforced by custom permission).
