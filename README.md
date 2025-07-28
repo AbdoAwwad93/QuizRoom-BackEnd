@@ -19,6 +19,7 @@ Backend for a student quiz management system, supporting both desktop and web cl
 - [Quiz Endpoints](#quiz-endpoints)
 - [Student Endpoints](#student-endpoints)
 - [Student Quiz Interaction](#student-quiz-interaction)
+- [Statistics Endpoints](#statistics-endpoints)
 ---
 ## 🚀 Getting Started
 
