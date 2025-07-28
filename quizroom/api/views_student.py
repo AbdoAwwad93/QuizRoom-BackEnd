@@ -42,7 +42,7 @@ class StudentCurrentQuizzesView(APIView):
             start_date__lte=now,
             end_date__gte=now
         ).select_related('course')
-        serializer = QuizSerializer(quizzes, many=True)
+        serializer = QuizSerializer(quizzes, many=True, context={'student': student})
         return Response(serializer.data)
 
 class StudentEnrolledCoursesView(APIView):

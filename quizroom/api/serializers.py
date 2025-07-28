@@ -80,16 +80,24 @@ class StudentListSerializer(serializers.ModelSerializer):
 class QuizSerializer(serializers.ModelSerializer):
     course_id = serializers.IntegerField(source='course.id', read_only=True)
     course_name = serializers.SerializerMethodField()
+    submitted = serializers.SerializerMethodField()
 
     class Meta:
         model = Quiz
         fields = (
             'id', 'title', 'course_id', 'course_name', 'week_number', 'start_date', 'end_date',
-            'duration', 'total_points', 'created_at', 'updated_at'
+            'duration', 'total_points', 'created_at', 'updated_at', 'submitted'
         )
 
     def get_course_name(self, obj):
         return obj.course.name if obj.course else None
+
+    def get_submitted(self, obj):
+        student = self.context.get('student')
+        if not student:
+            return False
+        from quizroom.models.submissions.models import StudentQuizSubmission
+        return StudentQuizSubmission.objects.filter(student=student, quiz=obj).exists()
 
 class QuestionCreateSerializer(serializers.Serializer):
     question_text = serializers.CharField(max_length=2048)

@@ -545,7 +545,39 @@ python manage.py runserver
 - **List Current (Active) Quizzes for Student**
    - **GET** `/api/student/quizzes/current/`
    - Description: Retrieve quizzes for enrolled courses that are currently active (by date).
-
+   - Response:
+     ```json
+     [
+    {
+      "id": 12,
+      "title": "Algebra Midterm",
+      "course_id": 3,
+      "course_name": "Algebra 101",
+      "week_number": 6,
+      "start_date": "2025-07-20T09:00:00Z",
+      "end_date": "2025-07-29T23:59:00Z",
+      "duration": 60,
+      "total_points": 100,
+      "created_at": "2025-07-01T10:00:00Z",
+      "updated_at": "2025-07-10T12:00:00Z",
+      "submitted": true
+    },
+    {
+      "id": 15,
+      "title": "Geometry Quiz",
+      "course_id": 3,
+      "course_name": "Algebra 101",
+      "week_number": 7,
+      "start_date": "2025-07-25T08:00:00Z",
+      "end_date": "2025-07-30T23:59:00Z",
+      "duration": 45,
+      "total_points": 50,
+      "created_at": "2025-07-15T09:30:00Z",
+      "updated_at": "2025-07-20T11:00:00Z",
+      "submitted": false
+    }
+  ]
+    ```
 - **Retrieve Student's Quiz Submission (with Answers)**
    - **GET** `/api/student/quizzes/<quiz_id>/submission/`
    - Description: Retrieve the authenticated student's submission for a quiz, including all answers and feedback if released. Returns `{"submission": null}` if not submitted.
