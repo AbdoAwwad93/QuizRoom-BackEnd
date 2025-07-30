@@ -628,7 +628,7 @@ python manage.py runserver
 
 - **List All Student Submissions**
    - **GET** `/api/student/submissions/`
-   - Description: Retrieve all quiz submissions for the authenticated student, including the course name and quiz title.
+   - Description: Retrieve all quiz submissions for the authenticated student
    - Response:
      ```json
      [
@@ -647,7 +647,7 @@ python manage.py runserver
          "answers": [
            {
              "id": 101,
-             "question": 33,
+             "question_text": "What is 2+2",
              "answer_text": "42",
              "points": 10,
              "feedback": "Correct"
