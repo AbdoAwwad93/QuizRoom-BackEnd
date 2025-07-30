@@ -518,6 +518,7 @@ python manage.py runserver
          }
        ]
      }
+     ```
 ---
 ### Student Endpoints
 
@@ -578,7 +579,7 @@ python manage.py runserver
       "submitted": false
     }
   ]
-    ```
+  ```
 - **Retrieve Student's Quiz Submission (with Answers)**
    - **GET** `/api/student/quizzes/<quiz_id>/submission/`
    - Description: Retrieve the authenticated student's submission for a quiz, including all answers and feedback if released. Returns `{"submission": null}` if not submitted.
