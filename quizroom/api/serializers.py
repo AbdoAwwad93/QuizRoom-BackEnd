@@ -143,13 +143,21 @@ class InstructorGradeAnswerSerializer(serializers.ModelSerializer):
 class StudentQuizSubmissionSerializer(serializers.ModelSerializer):
     answers = StudentAnswerSerializer(source='studentanswer_set', many=True, read_only=True)
     student_name = serializers.SerializerMethodField()
+    quiz_title = serializers.SerializerMethodField()
+    course_name = serializers.SerializerMethodField()
 
     def get_student_name(self, obj):
         return obj.student.name if obj.student else None
 
+    def get_quiz_title(self, obj):
+        return obj.quiz.title if obj.quiz else None
+
+    def get_course_name(self, obj):
+        return obj.quiz.course.name if obj.quiz and obj.quiz.course else None
+
     class Meta:
         model = StudentQuizSubmission
-        fields = ['id', 'student', 'student_name', 'quiz', 'submission_date', 'grade', 'feedback', 'graded_at', 'status', 'answers']
+        fields = ['id', 'student', 'student_name', 'quiz', 'quiz_title', 'course_name', 'submission_date', 'grade', 'feedback', 'graded_at', 'status', 'answers']
         read_only_fields = ['id', 'student', 'quiz', 'submission_date', 'grade', 'graded_at', 'status', 'answers']
 
 class InstructorSubmissionFeedbackSerializer(serializers.ModelSerializer):

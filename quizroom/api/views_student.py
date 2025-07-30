@@ -216,3 +216,15 @@ class StudentSubmitQuizView(APIView):
         submission.submission_date = timezone.now()
         submission.save(update_fields=['status', 'submission_date'])
         return Response({'detail': 'Quiz submitted and answers saved successfully.'})
+
+class StudentAllSubmissionsView(APIView):
+    """
+    List all submissions for the authenticated student.
+    """
+    permission_classes = [permissions.IsAuthenticated, IsStudent]
+
+    def get(self, request):
+        student = request.user
+        submissions = StudentQuizSubmission.objects.filter(student=student).select_related('quiz__course')
+        serializer = StudentQuizSubmissionSerializer(submissions, many=True)
+        return Response(serializer.data)

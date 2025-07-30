@@ -51,7 +51,8 @@ urlpatterns = [
     path('student/quizzes/<int:quiz_id>/questions/', StudentQuizQuestionsView.as_view(), name='student_quiz_questions'),
     path('student/quizzes/<int:quiz_id>/questions/<int:question_id>/answer/', StudentSaveAnswerView.as_view(), name='student_save_answer'),
     path('student/quizzes/<int:quiz_id>/submit/', StudentSubmitQuizView.as_view(), name='student_submit_quiz'),
-    
+    path('student/submissions/', StudentAllSubmissionsView.as_view(), name='student_all_submissions'),
+
     path('instructor/statistics/quiz-scores/<int:quiz_id>/', QuizScoresView.as_view(), name='instructor_quiz_scores'),
     path('instructor/statistics/submission-rates/<int:quiz_id>/', SubmissionRatesView.as_view(), name='instructor_submission_rates'),
     path('instructor/statistics/grade-distribution/<int:quiz_id>/', GradeDistributionView.as_view(), name='instructor_grade_distribution'),
