@@ -149,3 +149,22 @@ class StudentPerformanceSummaryView(APIView):
             'total_students': len(classmates)
         }
         return Response(data)
+
+class InstructorStatisticsSummaryView(APIView):
+    permission_classes = [IsAuthenticated, IsInstructor]
+
+    def get(self, request):
+        instructor = request.user
+        courses = Course.objects.filter(instructorcourse__instructor=instructor)
+        course_ids = courses.values_list('id', flat=True)
+        quizzes = Quiz.objects.filter(course_id__in=course_ids)
+        quiz_ids = quizzes.values_list('id', flat=True)
+        student_ids = StudentCourse.objects.filter(course_id__in=course_ids).values_list('student_id', flat=True).distinct()
+        submission_count = StudentQuizSubmission.objects.filter(quiz_id__in=quiz_ids).count()
+
+        data = {
+            "total_quizzes": quizzes.count(),
+            "total_students": len(student_ids),
+            "total_submissions": submission_count
+        }
+        return Response(data)

@@ -518,6 +518,7 @@ python manage.py runserver
          }
        ]
      }
+     ```
 ---
 ### Student Endpoints
 
@@ -578,7 +579,7 @@ python manage.py runserver
       "submitted": false
     }
   ]
-    ```
+  ```
 - **Retrieve Student's Quiz Submission (with Answers)**
    - **GET** `/api/student/quizzes/<quiz_id>/submission/`
    - Description: Retrieve the authenticated student's submission for a quiz, including all answers and feedback if released. Returns `{"submission": null}` if not submitted.
@@ -625,6 +626,36 @@ python manage.py runserver
      ]
      ```
 
+- **List All Student Submissions**
+   - **GET** `/api/student/submissions/`
+   - Description: Retrieve all quiz submissions for the authenticated student, including the course name and quiz title.
+   - Response:
+     ```json
+     [
+       {
+         "id": 12,
+         "student": 7,
+         "student_name": "Ahmed Ali",
+         "quiz": 5,
+         "quiz_title": "Quiz2",
+         "course_name": "Math 101",
+         "submission_date": "2025-07-20T09:45:00+03:00",
+         "grade": 85,
+         "feedback": "Good job! Review question 3.",
+         "graded_at": "2025-07-21T10:00:00+03:00",
+         "status": "graded",
+         "answers": [
+           {
+             "id": 101,
+             "question": 33,
+             "answer_text": "42",
+             "points": 10,
+             "feedback": "Correct"
+           }
+         ]
+       }
+     ]
+     ```
 ---
 ### Student Quiz Interaction
 
@@ -709,6 +740,17 @@ python manage.py runserver
 ### Statistics Endpoints
 
 #### Instructor Statistics
+
+- **GET** `/api/instructor/statistics/summary/`
+  - Description: Returns the total number of quizzes the instructor owns, the number of students in their courses, and the number of student submissions for their quizzes.
+  - Response:
+    ```json
+    {
+      "total_quizzes": 8,
+      "total_students": 53,
+      "total_submissions": 211
+    }
+    ```
 
 - **GET** `/api/instructor/statistics/quiz-scores/<quiz_id>/`
   - Description: Returns average, highest, and lowest scores for the specified quiz.
