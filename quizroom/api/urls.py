@@ -9,10 +9,7 @@ from .views_instructor_questions import *
 from .views_instructor_grading import *
 from rest_framework_simplejwt.views import TokenRefreshView, TokenVerifyView
 from .views_student import *
-from .views_statistics import (
-    QuizScoresView, SubmissionRatesView, GradeDistributionView, StudentProgressView,
-    StudentPerformanceSummaryView
-)
+from .views_statistics import *
 
 urlpatterns = [
     path('auth/student-login/', StudentLoginView.as_view(), name='student_login'),
@@ -52,6 +49,7 @@ urlpatterns = [
     path('student/quizzes/<int:quiz_id>/questions/<int:question_id>/answer/', StudentSaveAnswerView.as_view(), name='student_save_answer'),
     path('student/quizzes/<int:quiz_id>/submit/', StudentSubmitQuizView.as_view(), name='student_submit_quiz'),
     
+    path('instructor/statistics/summary/', InstructorStatisticsSummaryView.as_view(), name='instructor_statistics_summary'),
     path('instructor/statistics/quiz-scores/<int:quiz_id>/', QuizScoresView.as_view(), name='instructor_quiz_scores'),
     path('instructor/statistics/submission-rates/<int:quiz_id>/', SubmissionRatesView.as_view(), name='instructor_submission_rates'),
     path('instructor/statistics/grade-distribution/<int:quiz_id>/', GradeDistributionView.as_view(), name='instructor_grade_distribution'),
