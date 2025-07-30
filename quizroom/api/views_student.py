@@ -192,7 +192,7 @@ class StudentSubmitQuizView(APIView):
         answers = request.data.get('answers', [])
         if not isinstance(answers, list):
             return Response({'detail': 'Answers must be a list.'}, status=400)
-        from quizroom.models.quizzes.models import Question
+            
         for answer in answers:
             question_id = answer.get('question_id')
             answer_text = answer.get('answer_text', '').strip()
@@ -202,8 +202,14 @@ class StudentSubmitQuizView(APIView):
                 question = Question.objects.get(id=question_id, quiz=quiz)
             except Question.DoesNotExist:
                 return Response({'detail': f'Question {question_id} not found in this quiz.'}, status=404)
-            ans_obj, _ = StudentAnswer.objects.get_or_create(submission=submission, question=question)
+            ans_obj, _ = StudentAnswer.objects.get_or_create(
+                submission=submission,
+                question=question,
+                defaults={'points': 0}
+            )
             ans_obj.answer_text = answer_text
+            if ans_obj.points is None:
+                ans_obj.points = 0
             ans_obj.save()
 
         submission.status = 'grading'

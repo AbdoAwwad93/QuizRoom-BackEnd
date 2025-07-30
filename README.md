@@ -19,6 +19,7 @@ Backend for a student quiz management system, supporting both desktop and web cl
 - [Quiz Endpoints](#quiz-endpoints)
 - [Student Endpoints](#student-endpoints)
 - [Student Quiz Interaction](#student-quiz-interaction)
+- [Statistics Endpoints](#statistics-endpoints)
 ---
 ## 🚀 Getting Started
 
@@ -704,6 +705,110 @@ python manage.py runserver
      }
      ```
 ---
+
+### Statistics Endpoints
+
+#### Instructor Statistics
+
+- **GET** `/api/instructor/statistics/quiz-scores/<quiz_id>/`
+  - Description: Returns average, highest, and lowest scores for the specified quiz.
+  - Response:
+    ```json
+    {
+      "quiz_id": 5,
+      "quiz_title": "Quiz2",
+      "average_score": 82.5,
+      "highest_score": 95,
+      "lowest_score": 60
+    }
+    ```
+
+- **GET** `/api/instructor/statistics/submission-rates/<quiz_id>/`
+  - Description: Shows which students submitted or did not submit for a given quiz.
+  - Response:
+    ```json
+    {
+      "quiz_id": 5,
+      "quiz_title": "Quiz2",
+      "submitted_students": [
+        { "id": 12, "email": "student1@example.com", "name": "Student One" }
+      ],
+      "not_submitted_students": [
+        { "id": 13, "email": "student2@example.com", "name": "Student Two" }
+      ]
+    }
+    ```
+
+- **GET** `/api/instructor/statistics/grade-distribution/<quiz_id>/`
+  - Description: Returns grade distribution (histogram) for a quiz. **The bins and range labels are dynamically generated based on the quiz's total points. For example, a 100-point quiz will use 10-point bins (0-9, 10-19, ..., 90-100), but a 40-point quiz will use 4-point bins (0-3, 4-7, ..., 36-40) and so on.**
+  - Response (example for a 100-point quiz):
+    ```json
+    {
+      "quiz_id": 5,
+      "quiz_title": "Quiz2",
+      "grade_distribution": {
+        "0-9": 0,
+        "10-19": 0,
+        "20-29": 0,
+        "30-39": 0,
+        "40-49": 1,
+        "50-59": 2,
+        "60-69": 4,
+        "70-79": 6,
+        "80-89": 8,
+        "90-100": 3
+      }
+    }
+    ```
+  - Response (example for a 40-point quiz):
+    ```json
+    {
+      "quiz_id": 7,
+      "quiz_title": "Quiz4",
+      "grade_distribution": {
+        "0-3": 0,
+        "4-7": 1,
+        "8-11": 0,
+        "12-15": 2,
+        "16-19": 0,
+        "20-23": 3,
+        "24-27": 1,
+        "28-31": 1,
+        "32-35": 0,
+        "36-40": 2
+      }
+    }
+    ```
+
+- **GET** `/api/instructor/statistics/student-progress/`
+  - Description: For each student in the course, shows number of completed and pending quizzes.
+  - Response:
+    ```json
+    {
+      "course_id": 1,
+      "course_name": "Math 101",
+      "student_progress": [
+        { "student_id": 12, "student_name": "Student One", "completed_quizzes": 3, "pending_quizzes": 1 },
+        { "student_id": 13, "student_name": "Student Two", "completed_quizzes": 2, "pending_quizzes": 2 }
+      ]
+    }
+    ```
+
+#### Student Statistics
+- **GET** `/api/student/statistics/performance-summary/<course_id>/`
+  - Description: Returns the student’s average score and ranking in the course.
+  - Response:
+    ```json
+    {
+      "course_id": 1,
+      "course_name": "Math 101",
+      "average_score": 85.0,
+      "ranking": 2,
+      "total_students": 25
+    }
+    ```
+
+
 ## 🔒 Permissions & Roles
 - **Students**: Can only access endpoints meant for students (to be implemented).
 - **Instructors**: Can only access instructor endpoints (enforced by custom permission).

@@ -9,9 +9,12 @@ from .views_instructor_questions import *
 from .views_instructor_grading import *
 from rest_framework_simplejwt.views import TokenRefreshView, TokenVerifyView
 from .views_student import *
+from .views_statistics import (
+    QuizScoresView, SubmissionRatesView, GradeDistributionView, StudentProgressView,
+    StudentPerformanceSummaryView
+)
 
 urlpatterns = [
-
     path('auth/student-login/', StudentLoginView.as_view(), name='student_login'),
     path('auth/instructor-login/', InstructorLoginView.as_view(), name='instructor_login'),
     path('auth/logout/', LogoutView.as_view(), name='logout'),
@@ -40,6 +43,7 @@ urlpatterns = [
     path('instructor/submissions/<int:submission_id>/edit-feedback/', InstructorEditSubmissionFeedbackView.as_view(), name='instructor_edit_submission_feedback'),
     path('instructor/answers/<int:answer_id>/edit-grade/', InstructorEditAnswerGradeView.as_view(), name='instructor_edit_answer_grade'),
     path('instructor/profile/edit/', InstructorProfileEditView.as_view(), name='instructor_profile_edit'),
+   
     path('student/quizzes/', StudentAllQuizzesView.as_view(), name='student_all_quizzes'),
     path('student/quizzes/current/', StudentCurrentQuizzesView.as_view(), name='student_current_quizzes'),
     path('student/courses/', StudentEnrolledCoursesView.as_view(), name='student_enrolled_courses'),
@@ -47,4 +51,11 @@ urlpatterns = [
     path('student/quizzes/<int:quiz_id>/questions/', StudentQuizQuestionsView.as_view(), name='student_quiz_questions'),
     path('student/quizzes/<int:quiz_id>/questions/<int:question_id>/answer/', StudentSaveAnswerView.as_view(), name='student_save_answer'),
     path('student/quizzes/<int:quiz_id>/submit/', StudentSubmitQuizView.as_view(), name='student_submit_quiz'),
+    
+    path('instructor/statistics/quiz-scores/<int:quiz_id>/', QuizScoresView.as_view(), name='instructor_quiz_scores'),
+    path('instructor/statistics/submission-rates/<int:quiz_id>/', SubmissionRatesView.as_view(), name='instructor_submission_rates'),
+    path('instructor/statistics/grade-distribution/<int:quiz_id>/', GradeDistributionView.as_view(), name='instructor_grade_distribution'),
+    path('instructor/statistics/student-progress/', StudentProgressView.as_view(), name='instructor_student_progress'),   
+    path('student/statistics/performance-summary/<int:course_id>/', StudentPerformanceSummaryView.as_view(), name='student_performance_summary'),
+
 ]

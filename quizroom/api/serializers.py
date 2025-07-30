@@ -118,6 +118,12 @@ class QuizCreateSerializer(serializers.Serializer):
     total_points = serializers.IntegerField(min_value=1)
 
 class StudentAnswerSerializer(serializers.ModelSerializer):
+    def to_internal_value(self, data):
+        data = super().to_internal_value(data)
+        if data.get('points') is None:
+            data['points'] = 0
+        return data
+
     class Meta:
         model = StudentAnswer
         fields = ['id', 'question', 'answer_text', 'points', 'feedback']
