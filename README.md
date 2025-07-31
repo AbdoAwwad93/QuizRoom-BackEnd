@@ -435,7 +435,8 @@ python manage.py runserver
        "answers": [
          {
            "id": 101,
-           "question": 10,
+           "question_id": 10,
+           "question_text": "What is 2 + 2?",
            "answer_text": "4",
            "points": 5,
            "feedback": "Correct!"
@@ -646,7 +647,8 @@ python manage.py runserver
          "status": "graded",
          "answers": [
            {
-             "id": 101,
+             "id": 201,
+             "question_id": 1,
              "question_text": "What is 2+2",
              "answer_text": "42",
              "points": 10,
