@@ -1,5 +1,3 @@
-# Serializers for QuizRoom API
-
 from rest_framework import serializers
 from quizroom.models.users.models import CustomUser, StudentProfile
 from quizroom.models.courses.models import Course, StudentCourse

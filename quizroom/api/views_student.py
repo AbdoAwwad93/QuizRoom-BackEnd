@@ -13,7 +13,8 @@ from quizroom.models.submissions.models import StudentAnswer
 from quizroom.api.serializers import StudentAnswerSerializer
 from django.db import transaction
 from quizroom.api.helpers import is_student_enrolled_in_course, is_student_enrolled_in_quiz
-
+from rest_framework.pagination import PageNumberPagination
+from django.conf import settings
 class StudentAllQuizzesView(APIView):
     """
     List all quizzes for courses the student is enrolled in.
@@ -226,5 +227,11 @@ class StudentAllSubmissionsView(APIView):
     def get(self, request):
         student = request.user
         submissions = StudentQuizSubmission.objects.filter(student=student).select_related('quiz__course')
+        paginator = PageNumberPagination()
+        paginator.page_size = settings.REST_FRAMEWORK.get('PAGE_SIZE', 5)
+        page = paginator.paginate_queryset(submissions, request)
+        if page is not None:
+            serializer = StudentQuizSubmissionSerializer(page, many=True)
+            return paginator.get_paginated_response(serializer.data)
         serializer = StudentQuizSubmissionSerializer(submissions, many=True)
         return Response(serializer.data)
