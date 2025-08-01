@@ -11,13 +11,12 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken, OutstandingToken
 from rest_framework_simplejwt.exceptions import TokenError
 
-from .serializers import LoginSerializer, UserSerializer
+from .serializers import *
 from quizroom.models.users.models import CustomUser
 from quizroom.models.courses.models import Course
 from quizroom.models.quizzes.models import *
-from quizroom.api.serializers import QuizSerializer, QuestionSerializer
 from quizroom.api.permissions import IsStudent, IsInstructor
-
+from quizroom.api.helpers import *
 class StudentLoginView(APIView):
     permission_classes = [AllowAny]
     def post(self, request):
@@ -104,3 +103,50 @@ class QuizDetailView(APIView):
                 questions = Question.objects.filter(quiz=quiz)
                 quiz_data['questions'] = QuestionSerializer(questions, many=True).data
         return Response(quiz_data)
+
+class RequestPasswordResetView(APIView):
+    permission_classes = [AllowAny]
+    def post(self, request):
+        serializer = RequestPasswordResetSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        email = serializer.validated_data['email']
+        user = CustomUser.objects.filter(email=email, is_active=True).first()
+        if user:
+            otp, entry = create_or_update_otp(user)
+            send_otp_email(user, otp)
+        return Response({'detail': 'If this email exists, an OTP has been sent.'}, status=status.HTTP_200_OK)
+
+class VerifyOTPView(APIView):
+    permission_classes = [AllowAny]
+    def post(self, request):
+        serializer = VerifyOTPSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        email = serializer.validated_data['email']
+        otp = serializer.validated_data['otp']
+        user = CustomUser.objects.filter(email=email, is_active=True).first()
+        if not user:
+            return Response({'detail': 'OTP verification failed.'}, status=status.HTTP_400_BAD_REQUEST)
+        valid, msg = check_otp_valid(user, otp)
+        if valid:
+            return Response({'detail': 'OTP verified.'}, status=status.HTTP_200_OK)
+        else:
+            return Response({'detail': msg}, status=status.HTTP_400_BAD_REQUEST)
+
+class ResetPasswordView(APIView):
+    permission_classes = [AllowAny]
+    def post(self, request):
+        serializer = ResetPasswordSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        email = serializer.validated_data['email']
+        otp = serializer.validated_data['otp']
+        new_password = serializer.validated_data['new_password']
+        user = CustomUser.objects.filter(email=email, is_active=True).first()
+        if not user:
+            return Response({'detail': 'Password reset failed.'}, status=status.HTTP_400_BAD_REQUEST)
+        valid, msg = check_otp_valid(user, otp)
+        if not valid:
+            return Response({'detail': msg}, status=status.HTTP_400_BAD_REQUEST)
+        user.set_password(new_password)
+        user.save()
+        clear_otp(user)
+        return Response({'detail': 'Password has been reset.'}, status=status.HTTP_200_OK)

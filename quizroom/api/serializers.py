@@ -176,3 +176,15 @@ class InstructorProfileEditSerializer(serializers.ModelSerializer):
     class Meta:
         model = CustomUser
         fields = ['name']
+
+class RequestPasswordResetSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+
+class VerifyOTPSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    otp = serializers.CharField(max_length=7)
+
+class ResetPasswordSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    otp = serializers.CharField(max_length=7)
+    new_password = serializers.CharField(write_only=True, min_length=8, max_length=128)

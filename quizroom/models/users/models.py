@@ -52,3 +52,20 @@ class InstructorProfile(models.Model):
     user = models.OneToOneField(CustomUser, on_delete=models.CASCADE, related_name='instructorprofile')
     def __str__(self):
         return f"InstructorProfile: {self.user.email}" # type: ignore
+
+class PasswordResetOTP(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE, related_name='password_reset_otps')
+    otp_hash = models.CharField(max_length=128)  # Store hashed OTP
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    failed_attempts = models.IntegerField(default=0)
+    is_blocked = models.BooleanField(default=False)
+    last_failed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['user', 'is_blocked']),
+        ]
+
+    def __str__(self):
+        return f"PasswordResetOTP for {self.user.email} (blocked={self.is_blocked})"

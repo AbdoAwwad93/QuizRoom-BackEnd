@@ -164,6 +164,56 @@ python manage.py runserver
   - Body: `{ "token": "<any_token>" }`
   - Response: Validity info
 
+---
+
+### Password Reset
+
+- **POST** `/api/auth/request-password-reset/`
+  - Description: Initiate password reset by requesting an OTP to be sent to the user's email.
+  - Body:
+    ```json
+    { "email": "user@example.com" }
+    ```
+  - Response:
+    ```json
+    { "detail": "If this email exists, an OTP has been sent." }
+    ```
+
+- **POST** `/api/auth/verify-otp/`
+  - Description: Verify the OTP sent to the user's email.
+  - Body:
+    ```json
+    { "email": "user@example.com", "otp": "1234567" }
+    ```
+  - Response (success):
+    ```json
+    { "detail": "OTP verified successfully." }
+    ```
+  - Response (failure):
+    ```json
+    { "detail": "Invalid or expired OTP." }
+    ```
+
+- **POST** `/api/auth/reset-password/`
+  - Description: Reset password using the OTP sent to the user's email.
+  - Body:
+    ```json
+    { "email": "user@example.com", "otp": "1234567", "new_password": "NewPassword123!" }
+    ```
+  - Response (success):
+    ```json
+    { "detail": "Password has been reset." }
+    ```
+  - Response (failure):
+    ```json
+    { "detail": "Password reset failed." }
+    ```
+
+  - **Security Notes:**
+    - OTP is valid for 10 minutes.
+    - After 5 failed attempts, OTP entry is blocked for 30 minutes.
+    - Password must be at least 8 characters.
+
 ### Student Management (Instructor Only)
 - **Create Student**
    - **POST** `/api/instructor/create-student/`
