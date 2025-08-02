@@ -155,7 +155,7 @@ class ResetPasswordView(APIView):
 
 
 class AdminCreateInstructorView(APIView):
-
+    permission_classes = [AllowAny]
     def post(self, request):
         serializer = AdminCreateInstructorSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -174,6 +174,7 @@ class AdminCreateInstructorView(APIView):
         return Response({'detail': 'Instructor created.', 'id': user.id, 'email': user.email, 'name': user.name}, status=201)
 
 class AdminCreateCourseView(APIView):
+    permission_classes = [AllowAny]
     def post(self, request):
         serializer = AdminCreateCourseSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
@@ -189,6 +190,7 @@ class AdminCreateCourseView(APIView):
         return Response({'detail': 'Course created.', 'id': course.id, 'name': course.name, 'code': course.code, 'level': course.level}, status=201)
 
 class AdminAssignInstructorView(APIView):
+    permission_classes = [AllowAny]
     def post(self, request):
         serializer = AdminAssignInstructorSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
