@@ -110,7 +110,7 @@ class RequestPasswordResetView(APIView):
         serializer = RequestPasswordResetSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         email = serializer.validated_data['email']
-        user = CustomUser.objects.filter(email=email, is_active=True).first()
+        user = CustomUser.objects.filter(email__iexact=email, is_active=True).first()
         if user:
             otp, entry = create_or_update_otp(user)
             send_otp_email(user, otp)
@@ -123,7 +123,7 @@ class VerifyOTPView(APIView):
         serializer.is_valid(raise_exception=True)
         email = serializer.validated_data['email']
         otp = serializer.validated_data['otp']
-        user = CustomUser.objects.filter(email=email, is_active=True).first()
+        user = CustomUser.objects.filter(email__iexact=email, is_active=True).first()
         if not user:
             return Response({'detail': 'OTP verification failed.'}, status=status.HTTP_400_BAD_REQUEST)
         valid, msg = check_otp_valid(user, otp)
@@ -140,7 +140,7 @@ class ResetPasswordView(APIView):
         email = serializer.validated_data['email']
         otp = serializer.validated_data['otp']
         new_password = serializer.validated_data['new_password']
-        user = CustomUser.objects.filter(email=email, is_active=True).first()
+        user = CustomUser.objects.filter(email__iexact=email, is_active=True).first()
         if not user:
             return Response({'detail': 'Password reset failed.'}, status=status.HTTP_400_BAD_REQUEST)
         valid, msg = check_otp_valid(user, otp)
