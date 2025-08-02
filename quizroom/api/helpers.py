@@ -7,6 +7,7 @@ from django.contrib.auth.hashers import make_password, check_password
 from django.core.mail import send_mail
 from quizroom.models.users.models import CustomUser, PasswordResetOTP
 from django.conf import settings
+import logging
 
 def is_instructor_for_course(course, instructor):
     """Returns True if instructor is assigned to the course."""
