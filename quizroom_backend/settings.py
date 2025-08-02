@@ -157,6 +157,10 @@ EMAIL_HOST_PASSWORD = config('Email_password')
 EMAIL_USE_TLS = True
 DEFAULT_FROM_EMAIL = config('Email')
 
+print("[DEBUG][SETTINGS] EMAIL_HOST_USER:", EMAIL_HOST_USER)
+print("[DEBUG][SETTINGS] EMAIL_HOST_PASSWORD:", EMAIL_HOST_PASSWORD[:2] + "***" if EMAIL_HOST_PASSWORD else None)
+print("[DEBUG][SETTINGS] DEFAULT_FROM_EMAIL:", DEFAULT_FROM_EMAIL)
+
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',

@@ -15,7 +15,7 @@ from .serializers import *
 from quizroom.models.users.models import CustomUser
 from quizroom.models.courses.models import Course
 from quizroom.models.quizzes.models import *
-from quizroom.api.permissions import *
+from quizroom.api.permissions import IsStudent, IsInstructor
 from quizroom.api.helpers import *
 class StudentLoginView(APIView):
     permission_classes = [AllowAny]
@@ -150,62 +150,3 @@ class ResetPasswordView(APIView):
         user.save()
         clear_otp(user)
         return Response({'detail': 'Password has been reset.'}, status=status.HTTP_200_OK)
-
-
-
-
-class AdminCreateInstructorView(APIView):
-
-    def post(self, request):
-        serializer = AdminCreateInstructorSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        data = serializer.validated_data
-        if CustomUser.objects.filter(email=data['email']).exists():
-            return Response({'detail': 'Email already exists.'}, status=status.HTTP_400_BAD_REQUEST)
-        user = CustomUser.objects.create_user(
-            email=data['email'],
-            name=data['name'],
-            password=data['password'],
-            role='instructor',
-            is_active=True
-        )
-        from quizroom.models.users.models import InstructorProfile
-        InstructorProfile.objects.create(user=user)
-        return Response({'detail': 'Instructor created.', 'id': user.id, 'email': user.email, 'name': user.name}, status=201)
-
-class AdminCreateCourseView(APIView):
-    def post(self, request):
-        serializer = AdminCreateCourseSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        data = serializer.validated_data
-        from quizroom.models.courses.models import Course
-        if Course.objects.filter(code=data['code']).exists():
-            return Response({'detail': 'Course code already exists.'}, status=400)
-        course = Course.objects.create(
-            name=data['name'],
-            code=data['code'],
-            level=data['level']
-        )
-        return Response({'detail': 'Course created.', 'id': course.id, 'name': course.name, 'code': course.code, 'level': course.level}, status=201)
-
-class AdminAssignInstructorView(APIView):
-   
-    def post(self, request):
-        serializer = AdminAssignInstructorSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        instructor_id = serializer.validated_data['instructor_id']
-        course_ids = serializer.validated_data['course_ids']
-        try:
-            instructor = CustomUser.objects.get(id=instructor_id, role='instructor')
-        except CustomUser.DoesNotExist:
-            return Response({'detail': 'Instructor not found.'}, status=404)
-        from quizroom.models.courses.models import Course, InstructorCourse
-        courses = Course.objects.filter(id__in=course_ids)
-        if courses.count() != len(course_ids):
-            return Response({'detail': 'One or more courses not found.'}, status=400)
-        created = 0
-        for course in courses:
-            obj, was_created = InstructorCourse.objects.get_or_create(instructor=instructor, course=course)
-            if was_created:
-                created += 1
-        return Response({'detail': f'Instructor assigned to {created} course(s).'}, status=200)

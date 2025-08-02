@@ -48,13 +48,19 @@ def create_or_update_otp(user):
 def send_otp_email(user, otp):
     subject = 'Your Password Reset OTP'
     message = f'Your OTP for password reset is: {otp}\nThis code will expire in {OTP_EXPIRY_MINUTES} minutes.'
-    send_mail(
-        subject,
-        message,
-        settings.DEFAULT_FROM_EMAIL,
-        [user.email],
-        fail_silently=False,
-    )
+    logging.debug(f"Sending OTP email to: {user.email} | OTP: {otp}")
+    try:
+        send_mail(
+            subject,
+            message,
+            settings.DEFAULT_FROM_EMAIL,
+            [user.email],
+            fail_silently=False,
+        )
+        logging.debug(f"Email sent to {user.email}")
+    except Exception as e:
+        logging.error(f"Failed to send OTP email to {user.email}: {e}")
+        raise
 
 def check_otp_valid(user, otp):
     try:
