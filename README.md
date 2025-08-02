@@ -43,27 +43,6 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-### 3b. API Pagination Settings
-All list endpoints in this API are paginated by default using Django REST Framework's `PageNumberPagination`.
-
-- **Default page size:** 10 items per page
-- **How to request a specific page:**
-  - Use the `?page=<number>` query parameter, e.g. `/api/student/submissions/?page=2`
-- **Paginated response format:**
-  ```json
-  {
-    "count": 42,
-    "next": "http://localhost:8000/api/student/submissions/?page=2",
-    "previous": null,
-    "results": [
-      { /*first page of*/ }
-    ]
-  }
-  ```
-- **To change the default page size:** Edit `PAGE_SIZE` in `quizroom_backend/settings.py` under the `REST_FRAMEWORK` section.
-
-All frontend and API consumers should expect this paginated response format for any endpoint returning a list of objects.
-
 ### 4. Configure Environment Variables
 Create a `.env` file in the project root directory with your database credentials:
 ```
