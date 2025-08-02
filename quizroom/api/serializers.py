@@ -188,3 +188,18 @@ class ResetPasswordSerializer(serializers.Serializer):
     email = serializers.EmailField()
     otp = serializers.CharField(max_length=7)
     new_password = serializers.CharField(write_only=True, min_length=8, max_length=128)
+
+
+class AdminCreateInstructorSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    name = serializers.CharField(max_length=255)
+    password = serializers.CharField(write_only=True, min_length=8)
+
+class AdminCreateCourseSerializer(serializers.Serializer):
+    name = serializers.CharField(max_length=255)
+    code = serializers.CharField(max_length=20)
+    level = serializers.IntegerField(min_value=1, max_value=4)
+
+class AdminAssignInstructorSerializer(serializers.Serializer):
+    instructor_id = serializers.IntegerField()
+    course_ids = serializers.ListField(child=serializers.IntegerField(), allow_empty=False)
