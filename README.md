@@ -229,7 +229,7 @@ python manage.py runserver
      ```
    - Response (course level too high):
      ```json
-     { "detail": "Student level (2) is less than course level(s) for course id(s): [4]." }
+     { "detail": "Student level (2) is less than course level(s) for course(s): [\"Advanced Algorithms\"]" }
      ```
 - **List All Students Managed by Instructor**
    - **GET** `/api/instructor/students/`

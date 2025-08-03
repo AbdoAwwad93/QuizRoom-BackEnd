@@ -57,9 +57,10 @@ class CreateStudentView(APIView):
                 missing_names = [course.name for course in missing_courses]
                 return Response({'detail': f'You are not authorized to enroll students in course(s): {missing_names}.'}, status=status.HTTP_400_BAD_REQUEST)
 
-            invalid_level_courses = [course.id for course in courses if course.level > level]
+            invalid_level_courses = [course for course in courses if course.level > level]
             if invalid_level_courses:
-                return Response({'detail': f'Student level ({level}) is less than course level(s) for course id(s): {invalid_level_courses}.'}, status=status.HTTP_400_BAD_REQUEST)
+                invalid_names = [course.name for course in invalid_level_courses]
+                return Response({'detail': f'Student level ({level}) is less than course level(s) for course(s): {invalid_names}.'}, status=status.HTTP_400_BAD_REQUEST)
 
             for course in courses:
                 if not StudentCourse.objects.filter(student=user, course=course).exists():
