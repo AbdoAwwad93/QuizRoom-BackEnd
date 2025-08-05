@@ -196,40 +196,19 @@ python manage.py runserver
 ### Student Management (Instructor Only)
 - **Create Student**
    - **POST** `/api/instructor/create-student/`
-   - Description: Create a new student and enroll them in selected courses taught by the instructor.
+   - Description: Create a new student and assign them to the instructor's course.
    - Body:
      ```json
      {
        "email": "student@example.com",
        "name": "Student Name",
        "password": "studentpassword",
-       "level": 2,
-       "courses": [1, 2]
+       "level": 2
      }
      ```
-   - Field Details:
-     - `courses` (**required**): List of course IDs to enroll the student in. The list must contain at least one course. Courses must be taught by the instructor and have a level less than or equal to the student's level.
-   - Validation:
-     - The student will **only** be enrolled in courses:
-       - Taught by the instructor making the request
-       - Whose `level` is less than or equal to the student's level
-     - If the `courses` field is missing or empty, the request will fail with an error.
-     - If any course is not taught by the instructor, or its level is higher than the student's, the request will fail with an error.
-   - Response (success):
+   - Response:
      ```json
      { "student": { "id": 12, "email": "student@example.com", "name": "Student Name", "level": 2 } }
-     ```
-   - Response (no courses provided):
-     ```json
-     { "detail": "You must enroll the student in at least one of your courses." }
-     ```
-   - Response (unauthorized course):
-     ```json
-     { "detail": "You are not authorized to enroll students in course(s): [\"Math 101\", \"Physics\"]" }
-     ```
-   - Response (course level too high):
-     ```json
-     { "detail": "Student level (2) is less than course level(s) for course(s): [\"Advanced Algorithms\"]" }
      ```
 - **List All Students Managed by Instructor**
    - **GET** `/api/instructor/students/`
