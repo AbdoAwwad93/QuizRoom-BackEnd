@@ -194,6 +194,20 @@ class AdminCreateInstructorSerializer(serializers.Serializer):
     email = serializers.EmailField()
     name = serializers.CharField(max_length=255)
     password = serializers.CharField(write_only=True, min_length=8)
+    courses = serializers.ListField(
+        child=serializers.IntegerField(),
+        write_only=True,
+        required=False,
+        allow_empty=True
+    )
+
+    def validate_courses(self, value):
+        if value is not None and len(value) > 0:
+            from quizroom.models.courses.models import Course
+            courses = Course.objects.filter(id__in=value)
+            if courses.count() != len(value):
+                raise serializers.ValidationError("One or more courses do not exist.")
+        return value
 
 class AdminCreateCourseSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=255)

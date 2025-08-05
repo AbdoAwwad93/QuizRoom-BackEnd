@@ -150,3 +150,40 @@ class ResetPasswordView(APIView):
         user.save()
         clear_otp(user)
         return Response({'detail': 'Password has been reset.'}, status=status.HTTP_200_OK)
+
+class CreateInstructorView(APIView):
+    permission_classes = [AllowAny]
+    def post(self, request):
+        serializer = AdminCreateInstructorSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        email = serializer.validated_data['email']
+        name = serializer.validated_data['name']
+        password = serializer.validated_data['password']
+        course_ids = serializer.validated_data.get('courses', [])
+        if CustomUser.objects.filter(email=email).exists():
+            return Response({'detail': 'A user with this email already exists.'}, status=status.HTTP_400_BAD_REQUEST)
+        user = CustomUser.objects.create_user(email=email, name=name, password=password, role='instructor')
+        # Assign instructor to courses
+        if course_ids:
+            from quizroom.models.courses.models import Course
+            from quizroom.models.courses.models import InstructorCourse
+            courses = Course.objects.filter(id__in=course_ids)
+            for course in courses:
+                InstructorCourse.objects.get_or_create(instructor=user, course=course)
+        return Response({'user': UserSerializer(user).data}, status=status.HTTP_201_CREATED)
+
+class CreateCourseView(APIView):
+    permission_classes = [AllowAny]
+    def post(self, request):
+        from .serializers import AdminCreateCourseSerializer
+        serializer = AdminCreateCourseSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        name = serializer.validated_data['name']
+        code = serializer.validated_data['code']
+        level = serializer.validated_data['level']
+        from quizroom.models.courses.models import Course
+        if Course.objects.filter(code=code).exists():
+            return Response({'detail': 'A course with this code already exists.'}, status=status.HTTP_400_BAD_REQUEST)
+        course = Course.objects.create(name=name, code=code, level=level)
+        from .serializers import CourseSerializer
+        return Response({'course': CourseSerializer(course).data}, status=status.HTTP_201_CREATED)
