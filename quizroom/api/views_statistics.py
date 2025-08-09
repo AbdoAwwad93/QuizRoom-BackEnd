@@ -154,7 +154,7 @@ class StudentPerformanceSummaryView(APIView):
             'course_id': course.id,
             'course_name': course.name,
             'average_score': student_avg,
-            'ranking': ranking_by_avg,
+            'ranking_by_avg': ranking_by_avg,
             'total_score': student_total,
             'ranking_by_total_score': ranking_by_total,
             'total_students': len(classmates)

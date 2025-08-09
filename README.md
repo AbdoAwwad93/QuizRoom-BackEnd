@@ -938,7 +938,7 @@ python manage.py runserver
       "course_id": 1,
       "course_name": "Math 101",
       "average_score": 85.0,
-      "ranking": 2,
+      "ranking_by_avg": 2,
       "total_score": 255.0,
       "ranking_by_total_score": 3,
       "total_students": 25
