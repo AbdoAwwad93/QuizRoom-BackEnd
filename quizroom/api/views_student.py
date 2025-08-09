@@ -2,6 +2,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import permissions
 from django.utils import timezone
+from django.db.models import F
 from quizroom.api.permissions import IsStudent
 from quizroom.models.users.models import CustomUser
 from quizroom.models.courses.models import Course
@@ -103,6 +104,30 @@ class StudentQuizSubmissionView(APIView):
             response['grade'] = submission.grade
             response['feedback'] = submission.feedback
             response['graded_at'] = submission.graded_at
+            total_questions = questions.count()
+            correct_count = StudentAnswer.objects.filter(
+                submission=submission,
+                points=F('question__points')
+            ).count()
+            incorrect_count = max(0, total_questions - correct_count)
+            response['correct_count'] = correct_count
+            response['incorrect_count'] = incorrect_count
+
+            total_participants = StudentQuizSubmission.objects.filter(
+                quiz=quiz,
+                status='released',
+                grade__isnull=False
+            ).count()
+            rank_in_quiz = None
+            if submission.grade is not None:
+                higher = StudentQuizSubmission.objects.filter(
+                    quiz=quiz,
+                    status='released',
+                    grade__gt=submission.grade
+                ).count()
+                rank_in_quiz = higher + 1
+            response['rank_in_quiz'] = rank_in_quiz
+            response['total_participants'] = total_participants
         return Response(response)
 
 class StudentQuizQuestionsView(APIView):

@@ -2,11 +2,11 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import status
-from django.db.models import Count, Avg, Max, Min, Q, F
+from django.db.models import Count, Avg, Max, Min, Q, F, Sum
 from quizroom.api.permissions import IsInstructor, IsStudent
-from quizroom.models.courses.models import Course, StudentCourse, InstructorCourse
-from quizroom.models.quizzes.models import Quiz
-from quizroom.models.submissions.models import StudentQuizSubmission
+from quizroom.models.courses.models import Course, StudentCourse
+from quizroom.models.quizzes.models import Quiz, Question
+from quizroom.models.submissions.models import StudentQuizSubmission, StudentAnswer
 from quizroom.models.users.models import CustomUser
 
 class QuizScoresView(APIView):
@@ -131,24 +131,79 @@ class StudentPerformanceSummaryView(APIView):
             return Response({'detail': 'Course not found or not enrolled'}, status=status.HTTP_404_NOT_FOUND)
         quizzes = Quiz.objects.filter(course=course)
         quiz_ids = list(quizzes.values_list('id', flat=True))
-        submissions = StudentQuizSubmission.objects.filter(student=student, quiz_id__in=quiz_ids, grade__isnull=False)
-        avg_score = submissions.aggregate(avg=Avg('grade'))['avg'] if submissions.exists() else None
+
+        per_student = (
+            StudentQuizSubmission.objects
+            .filter(quiz_id__in=quiz_ids, grade__isnull=False)
+            .values('student_id')
+            .annotate(total_score=Sum('grade'), average_score=Avg('grade'))
+        )
+
+        total_by_student = {row['student_id']: row['total_score'] for row in per_student}
+        avg_by_student = {row['student_id']: row['average_score'] for row in per_student}
+        student_total = total_by_student.get(student.id, 0)
+        student_avg = avg_by_student.get(student.id)
+        higher_totals = sum(1 for total in total_by_student.values() if total is not None and total > student_total)
+        ranking_by_total = higher_totals + 1 if total_by_student else None
+
+        higher_avgs = sum(1 for avg in avg_by_student.values() if avg is not None and student_avg is not None and avg > student_avg)
+        ranking_by_avg = higher_avgs + 1 if student_avg is not None else None
+
         classmates = StudentCourse.objects.filter(course=course).values_list('student_id', flat=True)
-        classmate_averages = {}
-        for sid in classmates:
-            s_subs = StudentQuizSubmission.objects.filter(student_id=sid, quiz_id__in=quiz_ids, grade__isnull=False)
-            avg = s_subs.aggregate(avg=Avg('grade'))['avg'] if s_subs.exists() else 0
-            classmate_averages[sid] = avg
-        sorted_averages = sorted([(sid, avg) for sid, avg in classmate_averages.items()], key=lambda x: x[1], reverse=True)
-        rank = next((i+1 for i, (sid, avg) in enumerate(sorted_averages) if sid == student.id), None)
         data = {
             'course_id': course.id,
             'course_name': course.name,
-            'average_score': avg_score,
-            'ranking': rank,
+            'average_score': student_avg,
+            'ranking': ranking_by_avg,
+            'total_score': student_total,
+            'ranking_by_total_score': ranking_by_total,
             'total_students': len(classmates)
         }
         return Response(data)
+
+
+class InstructorQuizQuestionStatsView(APIView):
+    permission_classes = [IsAuthenticated, IsInstructor]
+
+    def get(self, request, quiz_id):
+        instructor = request.user
+        try:
+            quiz = Quiz.objects.get(id=quiz_id, course__instructorcourse__instructor=instructor)
+        except Quiz.DoesNotExist:
+            return Response({'detail': 'Quiz not found or not authorized'}, status=status.HTTP_404_NOT_FOUND)
+        submissions = StudentQuizSubmission.objects.filter(quiz=quiz, status='released', grade__isnull=False)
+        submission_ids = submissions.values_list('id', flat=True)
+
+        questions = list(Question.objects.filter(quiz=quiz).values('id', 'question_text', 'points'))
+        stats_by_q = {q['id']: {'question_id': q['id'], 'question_text': q['question_text'], 'points': q['points'], 'correct': 0, 'incorrect': 0} for q in questions}
+
+        if submission_ids:
+            answer_counts = (
+                StudentAnswer.objects
+                .filter(submission_id__in=submission_ids)
+                .values('question_id')
+                .annotate(
+                    correct=Count('id', filter=Q(points=F('question__points'))),
+                    total=Count('id')
+                )
+            )
+            for row in answer_counts:
+                qid = row['question_id']
+                stats_by_q[qid]['correct'] = row['correct']
+                stats_by_q[qid]['incorrect'] = row['total'] - row['correct']
+        most_missed = None
+        most_correct = None
+        if stats_by_q:
+            most_missed = max(stats_by_q.values(), key=lambda x: x['incorrect'])
+            most_correct = max(stats_by_q.values(), key=lambda x: x['correct'])
+
+        return Response({
+            'quiz_id': quiz.id,
+            'quiz_title': quiz.title,
+            'question_stats': list(stats_by_q.values()),
+            'most_missed_question': most_missed,
+            'most_correct_question': most_correct,
+        })
 
 class InstructorStatisticsSummaryView(APIView):
     permission_classes = [IsAuthenticated, IsInstructor]

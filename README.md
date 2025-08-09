@@ -633,7 +633,7 @@ python manage.py runserver
   ```
 - **Retrieve Student's Quiz Submission (with Answers)**
    - **GET** `/api/student/quizzes/<quiz_id>/submission/`
-   - Description: Retrieve the authenticated student's submission for a quiz, including all answers and feedback if released. Returns `{"submission": null}` if not submitted.
+  - Description: Retrieve the authenticated student's submission for a quiz, including all answers and feedback if released. Adds `correct_count`, `incorrect_count`, `rank_in_quiz`, and `total_participants` when grades are released. Returns `{"submission": null}` if not submitted.
    - Response (if submission exists):
      ```json
      {
@@ -651,7 +651,11 @@ python manage.py runserver
        ],
        "grade": 95,
        "feedback": "Great work!",
-       "graded_at": "2025-07-20T15:00:00+03:00"
+      "graded_at": "2025-07-20T15:00:00+03:00",
+      "correct_count": 8,
+      "incorrect_count": 2,
+      "rank_in_quiz": 3,
+      "total_participants": 27
      }
      ```
 
@@ -854,6 +858,22 @@ python manage.py runserver
       }
     }
     ```
+  
+  - **GET** `/api/instructor/statistics/question-stats/<quiz_id>/`
+    - Description: Per-question correctness stats for a quiz (only released, graded submissions considered). Also highlights the most missed and most correctly answered questions.
+    - Response:
+      ```json
+      {
+        "quiz_id": 5,
+        "quiz_title": "Quiz2",
+        "question_stats": [
+          { "question_id": 11, "question_text": "What is 2+2?", "points": 5, "correct": 18, "incorrect": 7 },
+          { "question_id": 12, "question_text": "Name a prime.", "points": 5, "correct": 10, "incorrect": 15 }
+        ],
+        "most_missed_question": { "question_id": 12, "question_text": "Name a prime.", "points": 5, "correct": 10, "incorrect": 15 },
+        "most_correct_question": { "question_id": 11, "question_text": "What is 2+2?", "points": 5, "correct": 18, "incorrect": 7 }
+      }
+      ```
   - Response (example for a 40-point quiz):
     ```json
     {
@@ -890,7 +910,7 @@ python manage.py runserver
 
 #### Student Statistics
 - **GET** `/api/student/statistics/performance-summary/<course_id>/`
-  - Description: Returns the student’s average score and ranking in the course.
+  - Description: Returns the student’s average score and ranking in the course. Also includes total score across all quizzes and ranking by total score.
   - Response:
     ```json
     {
@@ -898,6 +918,8 @@ python manage.py runserver
       "course_name": "Math 101",
       "average_score": 85.0,
       "ranking": 2,
+      "total_score": 255.0,
+      "ranking_by_total_score": 3,
       "total_students": 25
     }
     ```
