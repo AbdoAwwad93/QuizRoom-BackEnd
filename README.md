@@ -997,7 +997,7 @@ python manage.py runserver
     {
         "status": "success",
         "video_url": "https://signed-url-to-video",
-        "expires_in": 3600
+        "expires_in": 2592000
     }
     ```
   - Response (not found):

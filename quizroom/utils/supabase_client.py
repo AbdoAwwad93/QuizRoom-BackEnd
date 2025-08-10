@@ -108,25 +108,29 @@ def merge_video_chunks(quiz_id: str, student_id: str) -> Optional[str]:
             except Exception as e:
                 logger.warning(f"Error cleaning up {path}: {str(e)}")
 
-def get_signed_url(quiz_id: str, student_id: str, expires_in: int = 3600) -> Optional[str]:
+def get_signed_url(quiz_id: str, student_id: str) -> Optional[str]:
     """
     Generate a signed URL for accessing the final video.
+    The URL will be valid for 30 days.
     Returns None if the video doesn't exist.
     """
     try:
         file_path = f"quiz_{quiz_id}/student_{student_id}/{FINAL_VIDEO_NAME}"
+        
         try:
-            res = supabase.storage.from_(BUCKET_NAME).create_signed_url(file_path, expires_in=1)
+            supabase.storage.from_(BUCKET_NAME).get_public_url(file_path)
+            res = supabase.storage.from_(BUCKET_NAME).create_signed_url(
+                file_path,
+                expires_in=2592000
+            )
+            return res['signedURL']
+            
         except Exception as e:
             if "The resource was not found" in str(e):
                 return None
-            raise
+            logger.error(f"Error generating signed URL: {str(e)}")
+            return None
             
-        res = supabase.storage.from_(BUCKET_NAME).create_signed_url(
-            file_path,
-            expires_in=expires_in
-        )
-        return res['signedURL']
     except Exception as e:
-        logger.error(f"Error generating signed URL: {str(e)}")
+        logger.error(f"Error in get_signed_url: {str(e)}")
         return None
