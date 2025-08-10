@@ -10,6 +10,7 @@ from .views_instructor_grading import *
 from rest_framework_simplejwt.views import TokenRefreshView, TokenVerifyView
 from .views_student import *
 from .views_statistics import *
+from .views_recordings import VideoChunkUploadView, VideoRecordingView, merge_videos
 
 urlpatterns = [
  
@@ -66,5 +67,8 @@ urlpatterns = [
     path('instructor/statistics/question-stats/<int:quiz_id>/', InstructorQuizQuestionStatsView.as_view(), name='instructor_quiz_question_stats'),
     path('instructor/statistics/student-progress/', StudentProgressView.as_view(), name='instructor_student_progress'),   
     path('student/statistics/performance-summary/<int:course_id>/', StudentPerformanceSummaryView.as_view(), name='student_performance_summary'),
-
+  
+    path('api/quiz/<int:quiz_id>/student/<int:student_id>/chunk/', VideoChunkUploadView.as_view(), name='upload_video_chunk'),
+    path('api/quiz/<int:quiz_id>/student/<int:student_id>/recording/', VideoRecordingView.as_view(), name='get_recording_url'),
+    path('api/quiz/<int:quiz_id>/student/<int:student_id>/merge-videos/', merge_videos, name='merge_videos'),
 ]

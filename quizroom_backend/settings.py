@@ -14,6 +14,7 @@ from pathlib import Path
 from decouple import config
 from datetime import timedelta
 import dj_database_url
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -29,9 +30,20 @@ SECRET_KEY = 'django-insecure-83$7b80x+u*g0701mc5*)3^)u1qufwdzs&pi8twvx!$z=64-)8
 DEBUG = False
 
 ALLOWED_HOSTS = ['*']
+BASE_URL = config('BASE_URL', default='http://localhost:8000')
+SERVICE_ACCOUNT_TOKEN = config('SERVICE_ACCOUNT_TOKEN', default='dummy-service-token')
 
+SUPABASE_URL = config('SUPABASE_URL', default='')
+SUPABASE_SERVICE_KEY = config('SUPABASE_SERVICE_KEY', default='')
+SUPABASE_BUCKET = 'recordings'  
 
-# Application definition
+MAX_VIDEO_CHUNK_SIZE = 10 * 1024 * 1024
+MAX_VIDEO_DURATION = 120
+VIDEO_UPLOAD_TIMEOUT = 60
+
+TEMP_DIR = os.path.join(BASE_DIR, 'temp')
+os.makedirs(TEMP_DIR, exist_ok=True)
+
 
 INSTALLED_APPS = [
     'django.contrib.admin',

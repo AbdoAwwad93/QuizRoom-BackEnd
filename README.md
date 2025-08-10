@@ -44,13 +44,29 @@ pip install -r requirements.txt
 ```
 
 ### 4. Configure Environment Variables
-Create a `.env` file in the project root directory with your database credentials:
+Create a `.env` file in the project root directory with the following credentials:
 ```
+# Database Configuration
 DB_NAME=quizroom_db
 DB_USER=quizroom_user
 DB_PASSWORD=your_password
 DB_HOST=localhost
 DB_PORT=5432
+
+# Application URL (for generating absolute URLs)
+BASE_URL=http://localhost:8000
+
+# Service account token for internal API calls
+SERVICE_ACCOUNT_TOKEN=your_secure_token_here
+
+# Supabase Configuration
+SUPABASE_URL=your_supabase_project_url
+SUPABASE_SERVICE_KEY=your_supabase_service_role_key
+
+# Video Recording Settings
+MAX_VIDEO_CHUNK_SIZE=10485760  # 10MB max chunk size
+MAX_VIDEO_DURATION=7200  # 2 hours in seconds
+VIDEO_UPLOAD_TIMEOUT=60  # 60 seconds timeout for uploads
 ```
 
 ### 5. Apply Migrations
@@ -945,6 +961,56 @@ python manage.py runserver
     }
     ```
 
+### Video Recording Endpoints
+
+- **Upload Video Chunk**
+  - **POST** `/api/quiz/<quiz_id>/student/<student_id>/chunk/`
+  - Description: Upload a video chunk during quiz taking. Chunks are automatically merged when the quiz is submitted.
+  - Headers:
+    ```
+    Authorization: Bearer <access_token>
+    Content-Type: multipart/form-data
+    ```
+  - Body:
+    - `file`: The video chunk file (WebM format recommended)
+    - `sequence_number`: The order number of the chunk (starts from 0)
+  - Response (success):
+    ```json
+    {
+        "status": "success",
+        "message": "Chunk uploaded successfully"
+    }
+    ```
+  - Response (error):
+    ```json
+    {
+        "detail": "Error message"
+    }
+    ```
+  - Rate Limited: 10 requests per minute per user
+
+- **Get Recording URL**
+  - **GET** `/api/quiz/<quiz_id>/student/<student_id>/recording/`
+  - Description: Get a signed URL to view the merged recording (instructor only)
+  - Response (success):
+    ```json
+    {
+        "status": "success",
+        "video_url": "https://signed-url-to-video",
+        "expires_in": 3600
+    }
+    ```
+  - Response (not found):
+    ```json
+    {
+        "detail": "No recording found"
+    }
+    ```
+
+- **Merge Videos** (Internal)
+  - **POST** `/api/quiz/<quiz_id>/student/<student_id>/merge-videos/`
+  - Description: Internal endpoint to trigger video merging (called automatically on quiz submission)
+  - Note: This is an internal endpoint and should not be called directly by clients.
 
 ## 🔒 Permissions & Roles
 - **Students**: Can only access endpoints meant for students (to be implemented).

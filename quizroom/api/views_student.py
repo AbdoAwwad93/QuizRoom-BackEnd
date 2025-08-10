@@ -13,6 +13,10 @@ from quizroom.models.submissions.models import StudentQuizSubmission
 from quizroom.models.submissions.models import StudentAnswer
 from quizroom.api.serializers import StudentAnswerSerializer
 from django.db import transaction
+from django.conf import settings
+from django.urls import reverse
+import requests
+import logging
 from quizroom.api.helpers import is_student_enrolled_in_course, is_student_enrolled_in_quiz
 class StudentAllQuizzesView(APIView):
     """
@@ -239,7 +243,20 @@ class StudentSubmitQuizView(APIView):
         submission.status = 'grading'
         submission.submission_date = timezone.now()
         submission.save(update_fields=['status', 'submission_date'])
-        return Response({'detail': 'Quiz submitted and answers saved successfully.'})
+        try:
+            merge_url = f"{settings.BASE_URL}/api/quiz/{quiz_id}/student/{student.id}/merge-videos/"
+            headers = {
+                'Authorization': f'Bearer {settings.SERVICE_ACCOUNT_TOKEN}'
+            }
+            requests.post(merge_url, headers=headers, timeout=1)
+        except Exception as e:
+            logger = logging.getLogger(__name__)
+            logger.error(f"Failed to trigger video merging: {str(e)}")
+        
+        return Response({
+            'detail': 'Quiz submitted and answers saved successfully. Video processing has started.',
+            'submission_id': submission.id
+        })
 
 class StudentAllSubmissionsView(APIView):
     """
