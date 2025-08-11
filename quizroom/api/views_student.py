@@ -244,11 +244,15 @@ class StudentSubmitQuizView(APIView):
         submission.submission_date = timezone.now()
         submission.save(update_fields=['status', 'submission_date'])
         try:
-            merge_url = f"{settings.BASE_URL}/api/quiz/{quiz_id}/student/{student.id}/merge-videos/"
+            base_url = settings.BASE_URL
+            if not base_url.startswith(('http://', 'https://')):
+                base_url = f'https://{base_url}'
+                
+            merge_url = f"{base_url.rstrip('/')}/api/quiz/{quiz_id}/student/{student.id}/merge-videos/"
             headers = {
                 'Authorization': f'Bearer {settings.SERVICE_ACCOUNT_TOKEN}'
             }
-            requests.post(merge_url, headers=headers, timeout=1)
+            requests.post(merge_url, headers=headers, timeout=60)
         except Exception as e:
             logger = logging.getLogger(__name__)
             logger.error(f"Failed to trigger video merging: {str(e)}")
