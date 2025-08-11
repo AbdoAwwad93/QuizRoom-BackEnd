@@ -33,7 +33,7 @@ class VideoChunkUploadView(APIView):
         except (Quiz.DoesNotExist, CustomUser.DoesNotExist):
             return Response(
                 {"detail": "Quiz or student not found."},
-                status=status.HTTP_404_NOT_FOUND
+                status=status.HTTP_400_BAD_REQUEST
             )
             
         now = timezone.now()
