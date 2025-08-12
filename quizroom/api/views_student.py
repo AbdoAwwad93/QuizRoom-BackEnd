@@ -244,18 +244,16 @@ class StudentSubmitQuizView(APIView):
         submission.submission_date = timezone.now()
         submission.save(update_fields=['status', 'submission_date'])
         try:
-            base_url = settings.BASE_URL
-            if not base_url.startswith(('http://', 'https://')):
-                base_url = f'https://{base_url}'
-                
-            merge_url = f"{base_url.rstrip('/')}/api/quiz/{quiz_id}/student/{student.id}/merge-videos/"
-            headers = {
-                'Authorization': f'Bearer {settings.SERVICE_ACCOUNT_TOKEN}'
-            }
-            requests.post(merge_url, headers=headers, timeout=60)
+            from quizroom.utils.supabase_client import merge_video_chunks
+            
+            # Directly call the merge function
+            video_path = merge_video_chunks(quiz_id, student.id)
+            if video_path:
+                submission.screen_recording_path = video_path
+                submission.save(update_fields=['screen_recording_path'])
         except Exception as e:
             logger = logging.getLogger(__name__)
-            logger.error(f"Failed to trigger video merging: {str(e)}")
+            logger.error(f"Failed to merge videos: {str(e)}")
         
         return Response({
             'detail': 'Quiz submitted and answers saved successfully. Video processing has started.',
