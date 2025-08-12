@@ -36,9 +36,22 @@ SUPABASE_URL = config('SUPABASE_URL', default='')
 SUPABASE_SERVICE_KEY = config('SUPABASE_SERVICE_KEY', default='')
 SUPABASE_BUCKET = 'recordings'  
 
-MAX_VIDEO_CHUNK_SIZE = 10 * 1024 * 1024
-MAX_VIDEO_DURATION = 120
-VIDEO_UPLOAD_TIMEOUT = 60
+# File upload settings
+MAX_VIDEO_CHUNK_SIZE = 100 * 1024 * 1024  # 10MB
+MAX_VIDEO_DURATION = 120  # 2 minutes
+VIDEO_UPLOAD_TIMEOUT = 120  # 2 minutes
+
+# Increase max upload size to 100MB
+DATA_UPLOAD_MAX_MEMORY_SIZE = 100 * 1024 * 1024  # 100MB
+FILE_UPLOAD_MAX_MEMORY_SIZE = 100 * 1024 * 1024  # 100MB
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 10240  # Higher limit for large forms
+
+# Gunicorn settings
+FORWARDED_ALLOW_IPS = '*'
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# Increase request timeout
+REQUEST_TIMEOUT = 300  # 5 minutes
 
 TEMP_DIR = os.path.join(BASE_DIR, 'temp')
 os.makedirs(TEMP_DIR, exist_ok=True)

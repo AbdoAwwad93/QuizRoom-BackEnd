@@ -19,6 +19,20 @@ class VideoChunkUploadView(APIView):
     """
     permission_classes = [permissions.IsAuthenticated]
     
+    # Increase the max upload size to 100MB
+    max_upload_size = 100 * 1024 * 1024  # 100MB
+    
+    def validate_upload_size(self, request):
+        if request.content_type == '':
+            return False
+        if request.content_type.startswith('multipart'):
+            try:
+                request.META['CONTENT_LENGTH'] = str(self.max_upload_size + 1)
+                return int(request.META['CONTENT_LENGTH']) <= self.max_upload_size
+            except (ValueError, KeyError):
+                return False
+        return True
+    
     @ratelimit(key='user', rate='100/m', method='POST')
     def post(self, request, quiz_id, student_id):
         try:
@@ -41,9 +55,24 @@ class VideoChunkUploadView(APIView):
                     status=status.HTTP_400_BAD_REQUEST
                 )
             
-            # Get chunk file and sequence number
-            chunk_file = request.FILES.get('file')
-            sequence_number = request.data.get('sequence_number')
+            # Validate content length first
+            if not self.validate_upload_size(request):
+                return Response(
+                    {"status": "error", "message": f"File too large. Maximum size is {self.max_upload_size} bytes."},
+                    status=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE
+                )
+                
+# Get chunk file and sequence number
+            try:
+                chunk_file = request.FILES['file']  # Use direct access to trigger proper error
+                sequence_number = request.data.get('sequence_number')
+                if not sequence_number:
+                    raise KeyError("sequence_number is required")
+            except KeyError as e:
+                return Response(
+                    {"status": "error", "message": f"Missing required field: {str(e)}"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
             
             # Validate inputs
             if not chunk_file:
