@@ -21,79 +21,100 @@ class VideoChunkUploadView(APIView):
     
     @ratelimit(key='user', rate='10/m', method='POST')
     def post(self, request, quiz_id, student_id):
-        if str(request.user.id) != str(student_id) and not request.user.is_staff:
-            return Response(
-                {"detail": "You can only upload chunks for your own session."},
-                status=status.HTTP_403_FORBIDDEN
-            )
-            
         try:
+            # Authentication and validation
+            if str(request.user.id) != str(student_id) and not request.user.is_staff:
+                return Response(
+                    {"status": "error", "message": "You can only upload chunks for your own session."},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+                
+            # Get quiz and student
             quiz = Quiz.objects.get(id=quiz_id)
             student = CustomUser.objects.get(id=student_id, role='student')
-        except (Quiz.DoesNotExist, CustomUser.DoesNotExist):
-            return Response(
-                {"detail": "Quiz or student not found."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
             
-        now = timezone.now()
-        if now < quiz.start_date or now > quiz.end_date:
-            return Response(
-                {"detail": "Quiz is not currently active."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-            
-        chunk_file = request.FILES.get('file')
-        sequence_number = request.data.get('sequence_number')
-        
-        if not chunk_file or sequence_number is None:
-            return Response(
-                {"detail": "Both 'file' and 'sequence_number' are required."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-            
-        try:
-            sequence_number = int(sequence_number)
-            if sequence_number < 0:
-                raise ValueError("Sequence number must be non-negative")
-        except (ValueError, TypeError):
-            return Response(
-                {"detail": "Invalid sequence number."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-            
-        try:
-            chunk_data = chunk_file.read()
-            if not chunk_data:
-                raise ValueError("Empty chunk data")
-                
-            success = upload_chunk(quiz_id, student_id, chunk_data, sequence_number)
-            if not success:
+            # Check quiz time window
+            now = timezone.now()
+            if now < quiz.start_date or now > quiz.end_date:
                 return Response(
-                    {"detail": "Failed to upload chunk."},
+                    {"status": "error", "message": "Quiz is not currently active."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Get chunk file and sequence number
+            chunk_file = request.FILES.get('file')
+            sequence_number = request.data.get('sequence_number')
+            
+            # Validate inputs
+            if not chunk_file:
+                return Response(
+                    {"status": "error", "message": "No file was uploaded."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+                
+            try:
+                sequence_number = int(sequence_number)
+                if sequence_number < 0:
+                    raise ValueError("Sequence number must be non-negative")
+            except (ValueError, TypeError):
+                return Response(
+                    {"status": "error", "message": "Invalid sequence number."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Read chunk data
+            try:
+                chunk_data = chunk_file.read()
+                if not chunk_data:
+                    raise ValueError("Empty chunk data")
+                
+                # Upload chunk to storage
+                success = upload_chunk(quiz_id, student_id, chunk_data, sequence_number)
+                if not success:
+                    return Response(
+                        {"status": "error", "message": "Failed to upload chunk to storage."},
+                        status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                    )
+                
+                # Update or create chunk record
+                VideoChunk.objects.update_or_create(
+                    quiz=quiz,
+                    student=student,
+                    sequence_number=sequence_number,
+                    defaults={
+                        'chunk_path': f"quiz_{quiz_id}/student_{student_id}/chunk_{sequence_number:04d}.webm",
+                        'size': len(chunk_data),
+                        'is_processed': False
+                    }
+                )
+                
+                return Response({
+                    "status": "success",
+                    "message": f"Chunk {sequence_number} uploaded successfully",
+                    "chunk_id": sequence_number
+                })
+                
+            except Exception as e:
+                logger.error(f"Error processing chunk {sequence_number}: {str(e)}", exc_info=True)
+                return Response(
+                    {"status": "error", "message": f"Error processing chunk: {str(e)}"},
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR
                 )
                 
-            VideoChunk.objects.update_or_create(
-                quiz=quiz,
-                student=student,
-                sequence_number=sequence_number,
-                defaults={
-                    'chunk_path': f"quiz_{quiz_id}/student_{student_id}/chunk_{sequence_number:04d}.webm",
-                    'size': len(chunk_data),
-                    'is_processed': False
-                }
-            )
-            
-            return Response({
-                "status": "success",
-                "message": f"Chunk {sequence_number} uploaded successfully"
-            })
-            
-        except Exception as e:
-            logger.error(f"Error processing chunk {sequence_number}: {str(e)}")
+        except Quiz.DoesNotExist:
             return Response(
-                {"detail": f"Error processing chunk: {str(e)}"},
+                {"status": "error", "message": "Quiz not found."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except CustomUser.DoesNotExist:
+            return Response(
+                {"status": "error", "message": "Student not found."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            logger.error(f"Unexpected error in chunk upload: {str(e)}", exc_info=True)
+            return Response(
+                {"status": "error", "message": "An unexpected error occurred."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
