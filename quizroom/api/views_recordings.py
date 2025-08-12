@@ -19,7 +19,7 @@ class VideoChunkUploadView(APIView):
     """
     permission_classes = [permissions.IsAuthenticated]
     
-    @ratelimit(key='user', rate='10/m', method='POST')
+    @ratelimit(key='user', rate='100/m', method='POST')
     def post(self, request, quiz_id, student_id):
         try:
             # Authentication and validation
@@ -161,7 +161,7 @@ class VideoRecordingView(APIView):
 
 @api_view(['POST'])
 @permission_classes([permissions.IsAuthenticated])
-@ratelimit(key='ip', rate='5/h', method='POST')
+@ratelimit(key='ip', rate='100/h', method='POST')
 def merge_videos(request, quiz_id, student_id):
     """
     Endpoint to trigger video merging for a student's quiz session.
