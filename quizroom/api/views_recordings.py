@@ -11,7 +11,6 @@ from django.utils.decorators import method_decorator
 from django_ratelimit.decorators import ratelimit
 from ..models import Quiz, CustomUser, VideoChunk, StudentQuizSubmission
 from ..utils.supabase_client import upload_chunk, merge_video_chunks, get_signed_url
-
 logger = logging.getLogger(__name__)
 
 class VideoChunkUploadView(APIView):
@@ -20,8 +19,8 @@ class VideoChunkUploadView(APIView):
     """
     permission_classes = [permissions.IsAuthenticated]
     
-    # Increase the max upload size to 100MB
-    max_upload_size = 100 * 1024 * 1024  # 100MB
+    # Use the max upload size from settings
+    max_upload_size = settings.MAX_VIDEO_CHUNK_SIZE
     
     def validate_upload_size(self, request):
         if request.content_type == '':
