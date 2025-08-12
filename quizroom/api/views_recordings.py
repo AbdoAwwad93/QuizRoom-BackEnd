@@ -7,6 +7,7 @@ from rest_framework import status, permissions
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
+from django.utils.decorators import method_decorator
 from django_ratelimit.decorators import ratelimit
 from ..models import Quiz, CustomUser, VideoChunk, StudentQuizSubmission
 from ..utils.supabase_client import upload_chunk, merge_video_chunks, get_signed_url
@@ -33,7 +34,10 @@ class VideoChunkUploadView(APIView):
                 return False
         return True
     
-    @ratelimit(key='user', rate='100/m', method='POST')
+    @method_decorator(ratelimit(key='user', rate='100/m', method='POST'))
+    def dispatch(self, *args, **kwargs):
+        return super().dispatch(*args, **kwargs)
+        
     def post(self, request, quiz_id, student_id):
         try:
             # Authentication and validation
