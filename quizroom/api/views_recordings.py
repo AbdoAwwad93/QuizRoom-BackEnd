@@ -23,15 +23,28 @@ class VideoChunkUploadView(APIView):
     max_upload_size = settings.MAX_VIDEO_CHUNK_SIZE
     
     def validate_upload_size(self, request):
-        if request.content_type == '':
-            return False
-        if request.content_type.startswith('multipart'):
-            try:
-                request.META['CONTENT_LENGTH'] = str(self.max_upload_size + 1)
-                return int(request.META['CONTENT_LENGTH']) <= self.max_upload_size
-            except (ValueError, KeyError):
+        try:
+            # Check content type first
+            if not request.content_type or not request.content_type.startswith('multipart'):
+                logger.warning(f"Invalid content type: {request.content_type}")
                 return False
-        return True
+                
+            # Check Content-Length header
+            content_length = request.META.get('CONTENT_LENGTH')
+            if not content_length:
+                logger.warning("No content length header")
+                return False
+                
+            content_length = int(content_length)
+            if content_length > self.max_upload_size:
+                logger.warning(f"Content length {content_length} exceeds max {self.max_upload_size}")
+                return False
+                
+            return True
+            
+        except (ValueError, KeyError) as e:
+            logger.error(f"Error validating upload size: {str(e)}", exc_info=True)
+            return False
     
     @method_decorator(ratelimit(key='user', rate='100/m', method='POST'))
     def dispatch(self, *args, **kwargs):
@@ -58,10 +71,18 @@ class VideoChunkUploadView(APIView):
                     status=status.HTTP_400_BAD_REQUEST
                 )
             
-            # Validate content length first
+            # Validate content length and type first
             if not self.validate_upload_size(request):
+                content_length = request.META.get('CONTENT_LENGTH', 'unknown')
+                logger.warning(f"Upload validation failed. Content-Length: {content_length}, Type: {request.content_type}")
                 return Response(
-                    {"status": "error", "message": f"File too large. Maximum size is {self.max_upload_size} bytes."},
+                    {
+                        "status": "error",
+                        "message": f"Invalid upload. Please check the file size (max {self.max_upload_size / (1024*1024):.1f}MB) and ensure it's a valid video chunk.",
+                        "max_size_mb": self.max_upload_size / (1024*1024),
+                        "content_length": content_length,
+                        "content_type": request.content_type
+                    },
                     status=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE
                 )
                 

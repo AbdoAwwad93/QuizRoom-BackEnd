@@ -36,15 +36,24 @@ SUPABASE_URL = config('SUPABASE_URL', default='')
 SUPABASE_SERVICE_KEY = config('SUPABASE_SERVICE_KEY', default='')
 SUPABASE_BUCKET = 'recordings'  
 
-# File upload settings
+# File upload settings - all in bytes
 MAX_VIDEO_CHUNK_SIZE = 200 * 1024 * 1024  # 200MB
 MAX_VIDEO_DURATION = 300  # 5 minutes
 VIDEO_UPLOAD_TIMEOUT = 300  # 5 minutes
 
-# Increase max upload size to 200MB
+# Django file upload settings
 DATA_UPLOAD_MAX_MEMORY_SIZE = 200 * 1024 * 1024  # 200MB
 FILE_UPLOAD_MAX_MEMORY_SIZE = 200 * 1024 * 1024  # 200MB
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 10240  # Higher limit for large forms
+
+# Configure file upload handlers to handle large files
+FILE_UPLOAD_HANDLERS = [
+    'django.core.files.uploadhandler.TemporaryFileUploadHandler',
+    'django.core.files.uploadhandler.MemoryFileUploadHandler',
+]
+
+# Configure maximum file upload size for file fields
+MAX_UPLOAD_SIZE = 200 * 1024 * 1024  # 200MB
 
 # Gunicorn settings
 FORWARDED_ALLOW_IPS = '*'
