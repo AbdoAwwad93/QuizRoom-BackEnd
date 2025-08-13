@@ -55,15 +55,24 @@ def merge_video_chunks(quiz_id: str, student_id: str) -> Optional[str]:
     chunk_paths = []
     
     try:
-        prefix = f"quiz_{quiz_id}/student_{student_id}/{CHUNK_PREFIX}"
-        chunks = supabase.storage.from_(BUCKET_NAME).list(prefix)
+        prefix = f"quiz_{quiz_id}/student_{student_id}/"
+        all_files = supabase.storage.from_(BUCKET_NAME).list(prefix)
+        
+        chunks = [
+            f for f in all_files 
+            if f['name'].startswith(f"{prefix}chunk_") 
+            and f['name'].endswith('.webm')
+        ]
         
         if not chunks:
             logger.warning(f"No chunks found for quiz {quiz_id} and student {student_id}")
             return None
             
-        for i, chunk in enumerate(sorted(chunks, key=lambda x: x['name'])):
-            chunk_name = chunk['name'].split('/')[-1]
+        chunks.sort(key=lambda x: int(x['name'].split('_')[-1].split('.')[0]))
+            
+        for i, chunk in enumerate(chunks):
+            chunk_number = chunk['name'].split('_')[-1].split('.')[0].zfill(4)
+            chunk_name = f"chunk_{chunk_number}.webm"
             chunk_path = os.path.join(temp_dir, chunk_name)
             chunk_data = supabase.storage.from_(BUCKET_NAME).download(chunk['name'])
             
