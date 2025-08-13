@@ -10,7 +10,7 @@ from rest_framework.decorators import api_view, permission_classes
 from django.utils.decorators import method_decorator
 from django_ratelimit.decorators import ratelimit
 from ..models import Quiz, CustomUser, VideoChunk, StudentQuizSubmission
-from ..utils.supabase_client import upload_chunk, merge_video_chunks, get_signed_url
+from ..utils.supabase_client import upload_chunk, merge_video_chunks, get_signed_url, get_chunk_validation_report
 logger = logging.getLogger(__name__)
 
 class VideoChunkUploadView(APIView):
@@ -119,14 +119,26 @@ class VideoChunkUploadView(APIView):
             try:
                 chunk_data = chunk_file.read()
                 if not chunk_data:
-                    raise ValueError("Empty chunk data")
+                    return Response(
+                        {"status": "error", "message": "Empty chunk data received."},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
                 
-                # Upload chunk to storage
+                logger.info(f"Received chunk {sequence_number} for quiz {quiz_id}, student {student_id}: {len(chunk_data)} bytes")
+                
+                # Upload chunk to storage with validation
                 success = upload_chunk(quiz_id, student_id, chunk_data, sequence_number)
                 if not success:
+                    # The upload_chunk function logs the specific error
                     return Response(
-                        {"status": "error", "message": "Failed to upload chunk to storage."},
-                        status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                        {
+                            "status": "error", 
+                            "message": "Failed to upload chunk to storage. The chunk may be corrupted or invalid.",
+                            "details": "Check server logs for validation details",
+                            "chunk_size": len(chunk_data),
+                            "sequence_number": sequence_number
+                        },
+                        status=status.HTTP_422_UNPROCESSABLE_ENTITY
                     )
                 
                 # Update or create chunk record
@@ -211,6 +223,41 @@ class VideoRecordingView(APIView):
             "video_url": signed_url,
             "expires_in": 3600 
         })
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+@ratelimit(key='ip', rate='50/h', method='GET')
+def chunk_validation_report(request, quiz_id, student_id):
+    """
+    Get a detailed validation report for all chunks in a student's quiz session.
+    This is useful for debugging chunk upload issues.
+    """
+    # Only staff/instructors can access validation reports
+    if not request.user.is_staff and not hasattr(request.user, 'instructorprofile'):
+        return Response(
+            {"detail": "Only instructors can access chunk validation reports."},
+            status=status.HTTP_403_FORBIDDEN
+        )
+        
+    try:
+        quiz = Quiz.objects.get(id=quiz_id)
+        student = CustomUser.objects.get(id=student_id, role='student')
+    except (Quiz.DoesNotExist, CustomUser.DoesNotExist):
+        return Response(
+            {"detail": "Quiz or student not found."},
+            status=status.HTTP_404_NOT_FOUND
+        )
+        
+    try:
+        report = get_chunk_validation_report(quiz_id, student_id)
+        return Response(report)
+        
+    except Exception as e:
+        logger.error(f"Error generating chunk validation report: {str(e)}")
+        return Response(
+            {"detail": f"Error generating validation report: {str(e)}"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
 
 @api_view(['POST'])
 @permission_classes([permissions.IsAuthenticated])
