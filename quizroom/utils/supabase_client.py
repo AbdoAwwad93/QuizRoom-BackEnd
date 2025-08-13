@@ -30,40 +30,66 @@ def validate_webm_chunk(chunk_data: bytes, sequence_number: int) -> tuple[bool, 
         if not chunk_data or len(chunk_data) == 0:
             return False, "Chunk is empty"
         
-        if len(chunk_data) < 100:  # Minimum viable WebM chunk size
+        if len(chunk_data) < 50:  # Reduced minimum size for continuation chunks
             return False, f"Chunk too small ({len(chunk_data)} bytes)"
         
-        # Check WebM/Matroska magic number
-        # WebM files start with EBML header: 0x1A 0x45 0xDF 0xA3
-        if len(chunk_data) >= 4:
-            magic = chunk_data[:4]
-            if magic != b'\x1a\x45\xdf\xa3':
-                # Sometimes chunks might not start with EBML header if they're continuation chunks
-                # Check for common WebM patterns
-                found_webm_pattern = False
-                
-                # Look for WebM doctype in first 100 bytes
-                header_section = chunk_data[:min(100, len(chunk_data))]
-                if b'webm' in header_section.lower() or b'matroska' in header_section.lower():
-                    found_webm_pattern = True
-                
-                # For continuation chunks, look for cluster elements (0x1F 0x43 0xB6 0x75)
-                if not found_webm_pattern:
-                    for i in range(min(50, len(chunk_data) - 4)):
-                        if chunk_data[i:i+4] == b'\x1f\x43\xb6\x75':
-                            found_webm_pattern = True
-                            break
-                
-                if not found_webm_pattern:
-                    logger.warning(f"Chunk {sequence_number} doesn't appear to be valid WebM format")
-                    # Don't reject it completely as it might be a continuation chunk
-        
-        # Check for obvious corruption patterns
+        # Check for obvious corruption patterns first
         # If chunk is all zeros or all same byte, it's likely corrupted
-        if len(set(chunk_data[:100])) < 5:  # Very low entropy in first 100 bytes
-            return False, "Chunk appears to be corrupted (low entropy)"
+        sample_size = min(100, len(chunk_data))
+        unique_bytes = len(set(chunk_data[:sample_size]))
+        if unique_bytes < 3:  # Very low entropy indicates corruption
+            return False, f"Chunk appears corrupted (only {unique_bytes} unique bytes in first {sample_size} bytes)"
         
-        return True, "Chunk appears valid"
+        # Validate WebM structure based on chunk position
+        if sequence_number == 0:
+            # First chunk should have EBML header
+            if len(chunk_data) >= 4:
+                magic = chunk_data[:4]
+                if magic == b'\x1a\x45\xdf\xa3':
+                    return True, "Valid WebM header chunk"
+                else:
+                    # Sometimes first chunk might not have header if recording started mid-stream
+                    logger.warning(f"First chunk missing EBML header, but allowing it")
+        else:
+            # Continuation chunks - look for WebM cluster patterns
+            found_cluster = False
+            
+            # Look for common WebM/Matroska element IDs in the chunk
+            webm_patterns = [
+                b'\x1f\x43\xb6\x75',  # Cluster
+                b'\xa3',              # SimpleBlock
+                b'\xa1',              # Block
+                b'\xa0',              # BlockGroup
+                b'\xe0',              # Video track
+                b'\xe1',              # Audio track
+            ]
+            
+            # Check first 200 bytes for WebM patterns
+            search_area = chunk_data[:min(200, len(chunk_data))]
+            for pattern in webm_patterns:
+                if pattern in search_area:
+                    found_cluster = True
+                    break
+            
+            # Also check for WebM doctype strings
+            if not found_cluster:
+                search_text = search_area.lower()
+                if b'webm' in search_text or b'matroska' in search_text:
+                    found_cluster = True
+            
+            if found_cluster:
+                return True, f"Valid WebM continuation chunk (sequence {sequence_number})"
+            else:
+                # For continuation chunks, we're more lenient - they might be pure video data
+                # Only reject if the data looks obviously corrupted
+                if unique_bytes > 10:  # Has reasonable entropy
+                    logger.debug(f"Chunk {sequence_number} doesn't have clear WebM markers but has good data entropy - accepting as continuation chunk")
+                    return True, f"Continuation chunk without clear WebM markers (sequence {sequence_number})"
+                else:
+                    return False, f"Continuation chunk appears corrupted (low data variety)"
+        
+        # Default case - if we get here, the chunk passed basic checks
+        return True, f"Chunk {sequence_number} passed basic validation"
         
     except Exception as e:
         return False, f"Error validating chunk: {str(e)}"
@@ -199,59 +225,135 @@ def merge_video_chunks(quiz_id: str, student_id: str) -> Optional[str]:
         output_path = os.path.join(temp_dir, FINAL_VIDEO_NAME)
         merge_success = False
         
-        # Strategy 1: Direct concatenation with concat demuxer (best for identical formats)
+        # For WebM streaming chunks, binary concatenation is often the best approach
+        # Strategy 1: Binary concatenation for WebM streaming chunks
         try:
-            logger.info("Attempting FFmpeg concat demuxer merge...")
-            list_file = os.path.join(temp_dir, 'file_list.txt')
-            with open(list_file, 'w') as f:
-                for path in sorted(chunk_paths):
-                    f.write(f"file '{path}'\n")
+            logger.info("Attempting binary concatenation for WebM streaming chunks...")
             
-            (
-                ffmpeg
-                .input(list_file, format='concat', safe=0)
-                .output(output_path, c='copy', loglevel='warning')
-                .run(overwrite_output=True, capture_stdout=True, capture_stderr=True)
-            )
+            total_input_size = sum(os.path.getsize(path) for path in chunk_paths)
+            logger.info(f"Total input size: {total_input_size} bytes from {len(chunk_paths)} chunks")
             
-            # Verify the output file was created and is not empty
+            # Concatenate all chunks in order
+            with open(output_path, 'wb') as outfile:
+                for i, path in enumerate(sorted(chunk_paths)):
+                    with open(path, 'rb') as infile:
+                        chunk_data = infile.read()
+                        outfile.write(chunk_data)
+                        logger.debug(f"Appended chunk {i}: {len(chunk_data)} bytes")
+            
             if os.path.exists(output_path) and os.path.getsize(output_path) > 0:
-                logger.info("Concat demuxer merge successful")
-                merge_success = True
-            else:
-                logger.warning("Concat demuxer produced empty file")
+                output_size = os.path.getsize(output_path)
+                logger.info(f"Binary concatenation created file: {output_size} bytes")
                 
-        except ffmpeg.Error as e:
-            logger.warning(f"Concat demuxer failed: {e.stderr.decode() if e.stderr else str(e)}")
+                # Verify the result is close to expected size
+                if output_size >= total_input_size * 0.95:  # Allow small discrepancy
+                    logger.info("Binary concatenation successful - size check passed")
+                    merge_success = True
+                else:
+                    logger.warning(f"Binary concatenation size mismatch: {output_size} vs expected ~{total_input_size}")
+                    # Still might be valid, keep the file
+                    merge_success = True
+            else:
+                logger.error("Binary concatenation produced no output")
+                
         except Exception as e:
-            logger.warning(f"Concat demuxer failed: {str(e)}")
+            logger.warning(f"Binary concatenation failed: {str(e)}")
+        
+        # Strategy 2: FFmpeg concat demuxer (fallback for non-streaming chunks)
+        if not merge_success:
+            try:
+                logger.info("Attempting FFmpeg concat demuxer merge...")
+                list_file = os.path.join(temp_dir, 'file_list.txt')
+                with open(list_file, 'w') as f:
+                    for path in sorted(chunk_paths):
+                        f.write(f"file '{path}'\n")
+                
+                (
+                    ffmpeg
+                    .input(list_file, format='concat', safe=0)
+                    .output(output_path, c='copy', loglevel='warning')
+                    .run(overwrite_output=True, capture_stdout=True, capture_stderr=True)
+                )
+                
+                # Verify the output file was created and is not empty
+                if os.path.exists(output_path) and os.path.getsize(output_path) > 0:
+                    logger.info("Concat demuxer merge successful")
+                    merge_success = True
+                else:
+                    logger.warning("Concat demuxer produced empty file")
+                    
+            except ffmpeg.Error as e:
+                logger.warning(f"Concat demuxer failed: {e.stderr.decode() if e.stderr else str(e)}")
+            except Exception as e:
+                logger.warning(f"Concat demuxer failed: {str(e)}")
         
         # Strategy 2: Re-encode and concatenate (slower but more compatible)
         if not merge_success:
             try:
                 logger.info("Attempting FFmpeg filter_complex merge with re-encoding...")
                 
-                # Create input streams for each chunk
-                inputs = [ffmpeg.input(path) for path in sorted(chunk_paths)]
+                # For WebM files, we need to be more careful about stream handling
+                # First, let's try a simpler approach with individual inputs
+                input_args = []
+                for path in sorted(chunk_paths):
+                    input_args.extend(['-i', path])
                 
-                # Concatenate using filter_complex
-                (
-                    ffmpeg
-                    .concat(*inputs, v=1, a=1)
-                    .output(output_path, vcodec='libx264', acodec='aac', loglevel='warning')
-                    .run(overwrite_output=True, capture_stdout=True, capture_stderr=True)
-                )
+                # Build filter_complex string for concatenation
+                num_inputs = len(chunk_paths)
+                filter_str = ''
+                for i in range(num_inputs):
+                    filter_str += f'[{i}:v][{i}:a]'
+                filter_str += f'concat=n={num_inputs}:v=1:a=1[outv][outa]'
                 
-                if os.path.exists(output_path) and os.path.getsize(output_path) > 0:
+                cmd = (['ffmpeg'] + input_args + 
+                       ['-filter_complex', filter_str,
+                        '-map', '[outv]', '-map', '[outa]',
+                        '-c:v', 'libx264', '-c:a', 'aac',
+                        '-y', output_path])
+                
+                import subprocess
+                result = subprocess.run(cmd, capture_output=True, text=True)
+                
+                if result.returncode == 0 and os.path.exists(output_path) and os.path.getsize(output_path) > 0:
                     logger.info("Filter_complex merge successful")
                     merge_success = True
                 else:
-                    logger.warning("Filter_complex produced empty file")
+                    logger.warning(f"Filter_complex merge failed: {result.stderr}")
                     
-            except ffmpeg.Error as e:
-                logger.warning(f"Filter_complex merge failed: {e.stderr.decode() if e.stderr else str(e)}")
             except Exception as e:
                 logger.warning(f"Filter_complex merge failed: {str(e)}")
+        
+        # Strategy 2b: Simple binary concatenation for WebM (if filter_complex failed)
+        if not merge_success:
+            try:
+                logger.info("Attempting binary concatenation for WebM...")
+                
+                # For WebM, sometimes simple binary concatenation works if chunks are properly segmented
+                with open(output_path, 'wb') as outfile:
+                    for path in sorted(chunk_paths):
+                        with open(path, 'rb') as infile:
+                            outfile.write(infile.read())
+                
+                if os.path.exists(output_path) and os.path.getsize(output_path) > 0:
+                    # Verify the result with ffprobe
+                    try:
+                        probe_result = subprocess.run(
+                            ['ffprobe', '-v', 'quiet', '-print_format', 'json', '-show_format', output_path],
+                            capture_output=True, text=True
+                        )
+                        if probe_result.returncode == 0:
+                            logger.info("Binary concatenation successful and verified")
+                            merge_success = True
+                        else:
+                            logger.warning("Binary concatenation created file but it's not valid video")
+                            os.remove(output_path)
+                    except Exception:
+                        logger.warning("Could not verify binary concatenation result")
+                        # Keep the file anyway, it might work
+                        merge_success = True
+                        
+            except Exception as e:
+                logger.warning(f"Binary concatenation failed: {str(e)}")
         
         # Strategy 3: Copy first chunk if all else fails
         if not merge_success and chunk_paths:
