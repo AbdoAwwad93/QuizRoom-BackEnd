@@ -192,10 +192,18 @@ class VideoRecordingView(APIView):
     permission_classes = [IsAuthenticated,IsInstructor]
     
     def get(self, request, quiz_id, student_id):
-        if not request.user.is_staff and not hasattr(request.user, 'instructorprofile'):
+        # Check if the user is an instructor for the course associated with the quiz
+        try:
+            quiz = Quiz.objects.get(id=quiz_id)
+            if not quiz.course.instructorcourse_set.filter(instructor=request.user).exists():
+                return Response(
+                    {"detail": "You are not an instructor for this course."},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+        except Quiz.DoesNotExist:
             return Response(
-                {"detail": "Only instructors can access recordings."},
-                status=status.HTTP_403_FORBIDDEN
+                {"detail": "Quiz not found."},
+                status=status.HTTP_404_NOT_FOUND
             )
             
         try:
