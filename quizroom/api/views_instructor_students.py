@@ -47,30 +47,15 @@ class RemoveStudentFromCourseView(APIView):
     def delete(self, request, student_id):
         instructor = request.user
         
+        # Check if instructor has any courses (but don't require it)
         courses = Course.objects.filter(instructorcourse__instructor=instructor)
-        if not courses.exists():
-            return Response(
-                {'detail': 'Instructor is not assigned to any course.'}, 
-                status=status.HTTP_400_BAD_REQUEST
-            )
-            
+        
         try:
             student = CustomUser.objects.get(id=student_id, role='student')
         except CustomUser.DoesNotExist:
             return Response(
                 {'detail': 'Student not found.'}, 
                 status=status.HTTP_404_NOT_FOUND
-            )
-            
-        is_enrolled = StudentCourse.objects.filter(
-            student=student,
-            course__in=courses
-        ).exists()
-        
-        if not is_enrolled:
-            return Response(
-                {'detail': 'Student is not enrolled in any of your courses.'}, 
-                status=status.HTTP_403_FORBIDDEN
             )
         
         with transaction.atomic():

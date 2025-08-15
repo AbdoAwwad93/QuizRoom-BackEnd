@@ -6,7 +6,7 @@ from rest_framework import status
 from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import AllowAny
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.token_blacklist.models import BlacklistedToken, OutstandingToken
 from rest_framework_simplejwt.exceptions import TokenError
@@ -187,3 +187,121 @@ class CreateCourseView(APIView):
         course = Course.objects.create(name=name, code=code, level=level)
         from .serializers import CourseSerializer
         return Response({'course': CourseSerializer(course).data}, status=status.HTTP_201_CREATED)
+
+class AdminCreateInstructorView(APIView):
+    """
+    Admin view to create a new instructor.
+    Required fields: email, name, password, courses (list of course IDs)
+    """
+    permission_classes = [AllowAny]
+    
+    def post(self, request):
+        serializer = AdminCreateInstructorSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        email = serializer.validated_data['email']
+        name = serializer.validated_data['name']
+        password = serializer.validated_data['password']
+        course_ids = serializer.validated_data.get('courses', [])
+        
+        if CustomUser.objects.filter(email=email).exists():
+            return Response(
+                {'detail': 'A user with this email already exists.'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+            
+        # Create instructor user
+        user = CustomUser.objects.create_user(
+            email=email, 
+            name=name, 
+            password=password, 
+            role='instructor'
+        )
+        
+        # Assign instructor to courses if any
+        if course_ids:
+            from quizroom.models.courses.models import Course, InstructorCourse
+            courses = Course.objects.filter(id__in=course_ids)
+            for course in courses:
+                InstructorCourse.objects.get_or_create(instructor=user, course=course)
+        
+        return Response(
+            {'instructor': UserSerializer(user).data}, 
+            status=status.HTTP_201_CREATED
+        )
+
+class AdminCreateCourseView(APIView):
+    """
+    Admin view to create a new course.
+    Required fields: name, code, level (1-4)
+    """
+    permission_classes = [AllowAny]
+    
+    def post(self, request):
+        serializer = AdminCreateCourseSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        name = serializer.validated_data['name']
+        code = serializer.validated_data['code']
+        level = serializer.validated_data['level']
+        
+        if Course.objects.filter(code=code).exists():
+            return Response(
+                {'detail': 'A course with this code already exists.'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+            
+        course = Course.objects.create(name=name, code=code, level=level)
+        return Response(
+            {'course': CourseSerializer(course).data}, 
+            status=status.HTTP_201_CREATED
+        )
+
+class AdminAssignInstructorView(APIView):
+    """
+    Admin view to assign an instructor to one or more courses.
+    Required fields: instructor_id, course_ids (list of course IDs)
+    """
+    permission_classes = [AllowAny]
+    
+    def post(self, request):
+        serializer = AdminAssignInstructorSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        
+        instructor_id = serializer.validated_data['instructor_id']
+        course_ids = serializer.validated_data['course_ids']
+        
+        try:
+            instructor = CustomUser.objects.get(id=instructor_id, role='instructor')
+        except CustomUser.DoesNotExist:
+            return Response(
+                {'detail': 'Instructor not found or is not an instructor.'}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+            
+        from quizroom.models.courses.models import Course, InstructorCourse
+        courses = Course.objects.filter(id__in=course_ids)
+        
+        # Verify all course IDs are valid
+        if courses.count() != len(course_ids):
+            return Response(
+                {'detail': 'One or more courses not found.'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Create instructor-course relationships
+        assignments = []
+        for course in courses:
+            assignment, created = InstructorCourse.objects.get_or_create(
+                instructor=instructor, 
+                course=course
+            )
+            assignments.append(assignment)
+        
+        return Response(
+            {
+                'detail': f'Instructor assigned to {len(assignments)} course(s) successfully.',
+                'courses_assigned': [assignment.course.name for assignment in assignments]
+            },
+            status=status.HTTP_201_CREATED
+        )

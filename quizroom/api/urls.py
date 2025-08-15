@@ -14,9 +14,9 @@ from .views_recordings import VideoChunkUploadView, VideoRecordingView, merge_vi
 
 urlpatterns = [
  
-    # path('admin/create-instructor/', AdminCreateInstructorView.as_view(), name='admin_create_instructor'),
-    # path('admin/create-course/', AdminCreateCourseView.as_view(), name='admin_create_course'),
-    # path('admin/assign-instructor/', AdminAssignInstructorView.as_view(), name='admin_assign_instructor'),
+    path('admin/create-instructor/', AdminCreateInstructorView.as_view(), name='admin_create_instructor'),
+    path('admin/create-course/', AdminCreateCourseView.as_view(), name='admin_create_course'),
+    path('admin/assign-instructor/', AdminAssignInstructorView.as_view(), name='admin_assign_instructor'),
 
     path('auth/request-password-reset/', RequestPasswordResetView.as_view(), name='request_password_reset'),
     path('auth/verify-otp/', VerifyOTPView.as_view(), name='verify_otp'),
