@@ -26,52 +26,42 @@ def validate_webm_chunk(chunk_data: bytes, sequence_number: int) -> tuple[bool, 
     Returns (is_valid, error_message)
     """
     try:
-        # Basic size check
         if not chunk_data or len(chunk_data) == 0:
             return False, "Chunk is empty"
         
-        if len(chunk_data) < 50:  # Reduced minimum size for continuation chunks
+        if len(chunk_data) < 50:
             return False, f"Chunk too small ({len(chunk_data)} bytes)"
         
-        # Check for obvious corruption patterns first
-        # If chunk is all zeros or all same byte, it's likely corrupted
         sample_size = min(100, len(chunk_data))
         unique_bytes = len(set(chunk_data[:sample_size]))
-        if unique_bytes < 3:  # Very low entropy indicates corruption
+        if unique_bytes < 3:
             return False, f"Chunk appears corrupted (only {unique_bytes} unique bytes in first {sample_size} bytes)"
         
-        # Validate WebM structure based on chunk position
         if sequence_number == 0:
-            # First chunk should have EBML header
             if len(chunk_data) >= 4:
                 magic = chunk_data[:4]
                 if magic == b'\x1a\x45\xdf\xa3':
                     return True, "Valid WebM header chunk"
                 else:
-                    # Sometimes first chunk might not have header if recording started mid-stream
                     logger.warning(f"First chunk missing EBML header, but allowing it")
         else:
-            # Continuation chunks - look for WebM cluster patterns
             found_cluster = False
             
-            # Look for common WebM/Matroska element IDs in the chunk
             webm_patterns = [
-                b'\x1f\x43\xb6\x75',  # Cluster
-                b'\xa3',              # SimpleBlock
-                b'\xa1',              # Block
-                b'\xa0',              # BlockGroup
-                b'\xe0',              # Video track
-                b'\xe1',              # Audio track
+                b'\x1f\x43\xb6\x75',
+                b'\xa3', 
+                b'\xa1', 
+                b'\xa0',
+                b'\xe0',   
+                b'\xe1',
             ]
             
-            # Check first 200 bytes for WebM patterns
             search_area = chunk_data[:min(200, len(chunk_data))]
             for pattern in webm_patterns:
                 if pattern in search_area:
                     found_cluster = True
                     break
             
-            # Also check for WebM doctype strings
             if not found_cluster:
                 search_text = search_area.lower()
                 if b'webm' in search_text or b'matroska' in search_text:
@@ -80,15 +70,12 @@ def validate_webm_chunk(chunk_data: bytes, sequence_number: int) -> tuple[bool, 
             if found_cluster:
                 return True, f"Valid WebM continuation chunk (sequence {sequence_number})"
             else:
-                # For continuation chunks, we're more lenient - they might be pure video data
-                # Only reject if the data looks obviously corrupted
-                if unique_bytes > 10:  # Has reasonable entropy
+                if unique_bytes > 10:
                     logger.debug(f"Chunk {sequence_number} doesn't have clear WebM markers but has good data entropy - accepting as continuation chunk")
                     return True, f"Continuation chunk without clear WebM markers (sequence {sequence_number})"
                 else:
                     return False, f"Continuation chunk appears corrupted (low data variety)"
         
-        # Default case - if we get here, the chunk passed basic checks
         return True, f"Chunk {sequence_number} passed basic validation"
         
     except Exception as e:
@@ -103,7 +90,6 @@ def upload_chunk(quiz_id: str, student_id: str, chunk_data: bytes, sequence_numb
         chunk_name = f"{CHUNK_PREFIX}{sequence_number:04d}{CHUNK_EXTENSION}"
         file_path = f"quiz_{quiz_id}/student_{student_id}/{chunk_name}"
         
-        # Validate chunk data before upload
         is_valid, validation_message = validate_webm_chunk(chunk_data, sequence_number)
         if not is_valid:
             logger.error(f"Chunk {sequence_number} validation failed: {validation_message}")
@@ -118,15 +104,12 @@ def upload_chunk(quiz_id: str, student_id: str, chunk_data: bytes, sequence_numb
                 return True
         except Exception as e:
             logger.error(f"Error checking for existing chunk: {str(e)}")
-            
-        # Upload chunk to storage
         res = supabase.storage.from_(BUCKET_NAME).upload(
             file_path,
             chunk_data,
             {"content-type": "video/webm", "x-upsert": "false"}
         )
         
-        # Verify upload by checking file exists and has correct size
         try:
             uploaded_files = supabase.storage.from_(BUCKET_NAME).list(f"quiz_{quiz_id}/student_{student_id}/")
             uploaded_chunk = next((f for f in uploaded_files if f['name'] == chunk_name), None)
@@ -144,8 +127,6 @@ def upload_chunk(quiz_id: str, student_id: str, chunk_data: bytes, sequence_numb
                 
         except Exception as e:
             logger.warning(f"Could not verify upload of chunk {sequence_number}: {str(e)}")
-            # Don't fail the upload if we can't verify - the upload might have succeeded
-        
         return True
         
     except Exception as e:
@@ -177,8 +158,6 @@ def merge_video_chunks(quiz_id: str, student_id: str) -> Optional[str]:
             
         logger.info(f"Found {len(chunks)} chunks for quiz {quiz_id} and student {student_id}: {[c['name'] for c in chunks]}")
         chunks.sort(key=lambda x: int(x['name'].split('_')[-1].split('.')[0]))
-        
-        # Download and validate each chunk
         valid_chunks = []
         for i, chunk in enumerate(chunks):
             try:
