@@ -7,6 +7,8 @@ from quizroom.models.courses.models import Course, StudentCourse
 from quizroom.models.users.models import CustomUser, StudentProfile
 from .serializers import StudentListSerializer, StudentSerializer
 from quizroom.api.helpers import is_instructor_for_course
+from django.db import transaction
+from quizroom.models.submissions.models import StudentQuizSubmission, StudentAnswer
 
 class InstructorAllStudentsView(APIView):
     """
@@ -37,29 +39,51 @@ class InstructorAllStudentsSystemView(APIView):
 
 class RemoveStudentFromCourseView(APIView):
     """
-    API view for instructors to remove a student from their course.
+    API view for instructors to remove a student from the system completely.
+    This will delete all student-related data including profile, submissions, and course enrollments.
     """
     permission_classes = [IsAuthenticated, IsInstructor]
 
     def delete(self, request, student_id):
         instructor = request.user
+        
         courses = Course.objects.filter(instructorcourse__instructor=instructor)
         if not courses.exists():
-            return Response({'detail': 'Instructor is not assigned to any course.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {'detail': 'Instructor is not assigned to any course.'}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+            
         try:
             student = CustomUser.objects.get(id=student_id, role='student')
         except CustomUser.DoesNotExist:
-            return Response({'detail': 'Student not found.'}, status=status.HTTP_404_NOT_FOUND)
-        deleted = False
-        for course in courses:
-            if is_instructor_for_course(course, instructor):
-                num_deleted, _ = StudentCourse.objects.filter(student=student, course=course).delete()
-                if num_deleted:
-                    deleted = True
-        if deleted:
-            return Response({'detail': 'Student removed from your course(s).'}, status=status.HTTP_200_OK)
-        else:
-            return Response({'detail': 'Student was not assigned to your course(s).'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {'detail': 'Student not found.'}, 
+                status=status.HTTP_404_NOT_FOUND
+            )
+            
+        is_enrolled = StudentCourse.objects.filter(
+            student=student,
+            course__in=courses
+        ).exists()
+        
+        if not is_enrolled:
+            return Response(
+                {'detail': 'Student is not enrolled in any of your courses.'}, 
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        with transaction.atomic():
+            StudentAnswer.objects.filter(submission__student=student).delete()
+            StudentQuizSubmission.objects.filter(student=student).delete()
+            StudentCourse.objects.filter(student=student).delete()
+            StudentProfile.objects.filter(user=student).delete()
+            student.delete()
+        
+        return Response(
+            {'detail': 'Student and all related data have been permanently removed from the system.'}, 
+            status=status.HTTP_200_OK
+        )
 
 class UpdateStudentProfileView(APIView):
     """
