@@ -69,7 +69,8 @@ class StudentEnrolledCoursesView(APIView):
 
 class StudentQuizSubmissionView(APIView):
     """
-    Retrieve the student's submission for a specific quiz.
+    Retrieve the student's submission for a specific quiz with detailed points information.
+    Returns max points and earned points for each question and the overall quiz.
     """
     permission_classes = [permissions.IsAuthenticated, IsStudent]
 
@@ -79,60 +80,86 @@ class StudentQuizSubmissionView(APIView):
             quiz = Quiz.objects.get(id=quiz_id)
         except Quiz.DoesNotExist:
             return Response({'detail': 'Quiz not found.'}, status=404)
+            
         if not is_student_enrolled_in_quiz(quiz, student):
             return Response({'detail': 'You are not enrolled in this course.'}, status=403)
+            
         submission = StudentQuizSubmission.objects.filter(student=student, quiz=quiz).first()
         if not submission:
             return Response({'submission': None})
 
         questions = Question.objects.filter(quiz=quiz).order_by('id')
-        answers = {a.question_id: a for a in StudentAnswer.objects.filter(submission=submission)}
+        
+        answers = {
+            a.question_id: a 
+            for a in StudentAnswer.objects.filter(submission=submission).select_related('question')
+        }
+
         questions_data = []
-        for q in questions:
-            answer = answers.get(q.id)
+        total_max_points = 0
+        total_earned_points = 0
+
+        for question in questions:
+            answer = answers.get(question.id)
+            question_max_points = question.points
+            question_earned_points = answer.points if (answer and answer.points is not None) else 0
+            
+            total_max_points += question_max_points
+            total_earned_points += question_earned_points
+            
             questions_data.append({
-                'question_id': q.id,
-                'question_text': q.question_text,
+                'question_id': question.id,
+                'question_text': question.question_text,
+                'max_points': question_max_points,
+                'earned_points': question_earned_points if submission.status in ['released'] else None,
                 'answer_text': answer.answer_text if answer else '',
-                'points': answer.points if (answer and submission.status in ['released']) else None,
                 'feedback': answer.feedback if (answer and submission.status in ['released']) else None
             })
 
         response = {
             'submission_id': submission.id,
             'quiz_id': quiz.id,
+            'quiz_title': quiz.title,
             'status': submission.status,
+            'submission_date': submission.submission_date,
+            'max_quiz_points': total_max_points,
+            'earned_quiz_points': total_earned_points if submission.status in ['released'] else None,
             'questions': questions_data,
+            'quiz_summary': {
+                'max_total_points': total_max_points,
+                'earned_total_points': total_earned_points if submission.status in ['released'] else None,
+                'percentage': round((total_earned_points / total_max_points * 100), 2) 
+                             if (total_max_points > 0 and submission.status in ['released']) else None
+            }
         }
-        if submission.status in ['released']:
-            response['grade'] = submission.grade
-            response['feedback'] = submission.feedback
-            response['graded_at'] = submission.graded_at
-            total_questions = questions.count()
-            correct_count = StudentAnswer.objects.filter(
-                submission=submission,
-                points=F('question__points')
-            ).count()
-            incorrect_count = max(0, total_questions - correct_count)
-            response['correct_count'] = correct_count
-            response['incorrect_count'] = incorrect_count
 
-            total_participants = StudentQuizSubmission.objects.filter(
-                quiz=quiz,
-                status='released',
-                grade__isnull=False
-            ).count()
-            rank_in_quiz = None
-            if submission.grade is not None:
-                higher = StudentQuizSubmission.objects.filter(
+        if submission.status == 'released':
+            response.update({
+                'instructor_feedback': submission.feedback,
+                'graded_at': submission.graded_at,
+                'correct_count': sum(1 for q in questions_data if q['earned_points'] == q['max_points'] and q['max_points'] > 0),
+                'incorrect_count': len(questions_data) - sum(1 for q in questions_data if q['earned_points'] == q['max_points'] and q['max_points'] > 0),
+                'rank_in_quiz': self._calculate_rank(submission, quiz),
+                'total_participants': StudentQuizSubmission.objects.filter(
                     quiz=quiz,
                     status='released',
-                    grade__gt=submission.grade
+                    grade__isnull=False
                 ).count()
-                rank_in_quiz = higher + 1
-            response['rank_in_quiz'] = rank_in_quiz
-            response['total_participants'] = total_participants
+            })
+            
         return Response(response)
+    
+    def _calculate_rank(self, submission, quiz):
+        """Helper method to calculate the student's rank in the quiz."""
+        if submission.grade is None:
+            return None
+            
+        higher = StudentQuizSubmission.objects.filter(
+            quiz=quiz,
+            status='released',
+            grade__gt=submission.grade
+        ).count()
+        return higher + 1
 
 class StudentQuizQuestionsView(APIView):
     """

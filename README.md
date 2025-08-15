@@ -669,32 +669,84 @@ python manage.py runserver
   ]
   ```
 - **Retrieve Student's Quiz Submission (with Answers)**
-   - **GET** `/api/student/quizzes/<quiz_id>/submission/`
-  - Description: Retrieve the authenticated student's submission for a quiz, including all answers and feedback if released. Adds `correct_count`, `incorrect_count`, `rank_in_quiz`, and `total_participants` when grades are released. Returns `{"submission": null}` if not submitted.
-   - Response (if submission exists):
-     ```json
-     {
-       "submission_id": 1,
-       "quiz_id": 5,
-       "status": "graded",
-       "questions": [
-         {
-           "question_id": 1,
-           "question_text": "What is 2 + 2?",
-           "answer_text": "4",
-           "points": 5,
-           "feedback": "Correct!"
-         }
-       ],
-       "grade": 95,
-       "feedback": "Great work!",
-      "graded_at": "2025-07-20T15:00:00+03:00",
-      "correct_count": 8,
-      "incorrect_count": 2,
+   - **Get Quiz Submission**
+  - **GET** `/api/student/quizzes/<quiz_id>/submission/`
+  - Description: Retrieve the student's submission for a specific quiz with detailed points information.
+  - Response (if submission exists and is released):
+    ```json
+    {
+      "submission_id": 1,
+      "quiz_id": 1,
+      "quiz_title": "Basic Math Quiz",
+      "status": "released",
+      "submission_date": "2025-08-15T13:45:30Z",
+      "questions": [
+        {
+          "question_id": 1,
+          "question_text": "What is 2+2?",
+          "max_points": 10,
+          "earned_points": 10,
+          "answer_text": "4",
+          "feedback": "Correct!"
+        },
+        {
+          "question_id": 2,
+          "question_text": "What is 5*5?",
+          "max_points": 15,
+          "earned_points": 10,
+          "answer_text": "25",
+          "feedback": "Correct answer but missing units."
+        }
+      ],
+      "quiz_summary": {
+        "max_total_points": 25,
+        "earned_total_points": 20,
+        "percentage": 80.0
+      },
+      "instructor_feedback": "Good job overall",
+      "graded_at": "2025-08-15T14:30:15Z",
+      "correct_count": 1,
+      "incorrect_count": 1,
       "rank_in_quiz": 3,
-      "total_participants": 27
-     }
-     ```
+      "total_participants": 25
+    }
+    ```
+  - Response (if submission exists but not released):
+    ```json
+    {
+      "submission_id": 1,
+      "quiz_id": 1,
+      "quiz_title": "Basic Math Quiz",
+      "status": "submitted",
+      "submission_date": "2025-08-15T13:45:30Z",
+      "questions": [
+        {
+          "question_id": 1,
+          "question_text": "What is 2+2?",
+          "question_type": "multiple_choice",
+          "max_points": 10,
+          "earned_points": null,
+          "answer_text": "4",
+          "feedback": null
+        }
+      ],
+      "quiz_summary": {
+        "max_total_points": 10,
+        "earned_total_points": null,
+        "percentage": null
+      }
+    }
+    ```
+  - Response (if no submission exists):
+    ```json
+    {
+      "submission": null
+    }
+    ```
+  - Notes:
+    - `earned_points` and `feedback` are only shown when the submission status is 'released'
+    - `quiz_summary` provides an overview of the student's performance
+    - `rank_in_quiz` and `total_participants` are included when the submission is released
 
 - **List Student's Enrolled Courses**
    - **GET** `/api/student/courses/`
